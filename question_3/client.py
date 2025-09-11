@@ -41,21 +41,27 @@ class ResilientClient:
                 if self.protocol == "TCP":
                     self.sock.send(payload.encode())
                     self.sock.settimeout(timeout)
-                    reply = self.sock.recv(1024).decode()
+                    reply = self.sock.recv(1024).decode(errors="replace") 
                 else:  # UDP
                     self.sock.sendto(payload.encode(), (self.host, self.port))
                     self.sock.settimeout(timeout)
                     reply, _ = self.sock.recvfrom(1024)
                     reply = reply.decode()
 
+                print(f"[CLIENT] Message received: {reply}")
+
                 # Validate reply
                 if "|" in reply:
-                    body, recv_checksum = reply.split("|")
-                    if self.checksum(body) == recv_checksum:
+                    body, recv_checksum = reply.split("|", 1)
+                    curr_checksum = self.checksum(body)
+                    print(f"[CLIENT] Current: {curr_checksum} & Original: {recv_checksum}")
+
+                    if curr_checksum == recv_checksum:
                         print(f"[CLIENT] Received valid reply: {body}")
                         return
                     else:
                         print("[CLIENT] Checksum mismatch (possible corruption)")
+                        return
                 else:
                     print("[CLIENT] Invalid format (possible attack)")
 
@@ -82,8 +88,7 @@ if __name__ == "__main__":
     # Example usage:
     client = ResilientClient(host="localhost", port=8080, protocol="TCP")
     client.connect()
-    print("[CLIENT] Enter something: ")
-    msg_input = input("[CLIENT] ")
+    msg_input = input("[CLIENT] Enter something: ")
     client.send_message(msg_input)
     client.close()
 

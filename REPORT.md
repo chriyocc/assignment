@@ -141,7 +141,7 @@ while True:
                     print("Client disconnected")
                     break
 								
-                # Fault injection (3.2.1) goes here
+                # Fault injection (3.2.2) goes here
                 
             except:
                 break
