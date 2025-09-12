@@ -2,7 +2,8 @@ import socket, random, time
 import threading
 
 def randomFault(data, protocol):
-    r = random.random()
+    # r = random.random()
+    r = 0.5
     if r < 0.2:
         print(f"[{protocol} SERVER] Simulating packet loss\n")
         return 'error_code'.encode()
@@ -48,9 +49,11 @@ class ResilientTCPServer(threading.Thread):
             self.sock.close()
 
     def handle_client(self, conn):
+
         with conn:
             while True:
                 try:
+                    
                     data = conn.recv(1024)
                     if not data:
                         print("[TCP SERVER] Client disconnected")
@@ -65,12 +68,14 @@ class ResilientTCPServer(threading.Thread):
                         data = fault
 
                     try:
-                        conn.send(data)  # echo back
+                        conn.sendall(data)  # echo back
                         print("[TCP SERVER] Sent response.\n")
+                        data = conn.recv(1024)
+
                     except socket.error as e:
                         print(f"[TCP SERVER] Failed to send response: {e}")
                         break
-
+            
                 except Exception as e:
                     print(f"[TCP SERVER] Error: {e}")
                     break

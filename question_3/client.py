@@ -47,6 +47,7 @@ class ResilientClient:
         print(f"[CLIENT] Message is ready to send: ({payload})")
 
         while attempts < retries:
+            print(f"[CLIENT] Attempts: {attempts + 1}")
             try:
                 if self.protocol == "TCP":
                     self.sock.send(payload.encode())
