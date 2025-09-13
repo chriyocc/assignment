@@ -298,8 +298,7 @@ import socket, random, time
 import threading
 
 def randomFault(data, protocol):
-    # r = random.random()
-    r = 0.5
+    r = random.random()
     if r < 0.2:
         print(f"[{protocol} SERVER] Simulating packet loss\n")
         return 'error_code'.encode()
@@ -555,9 +554,12 @@ if __name__ == "__main__":
 
 This server includes built-in random fault simulation to test client resilience:
 
-1. **Packet Loss Testing**: Server randomly drops a packets
+1. **Packet Loss Testing** 
 
-   Example output:
+   Server randomly drops a packetsClient automatic retry 3 attempts.
+   The client automatically retries up to three times when it detects an invalid or missing response.
+
+   **Example output:**
 
    `server.py`
 
@@ -597,7 +599,13 @@ This server includes built-in random fault simulation to test client resilience:
 
    
 
-2. **Delay Testing**: Random delays up to 10 seconds simulate network latency
+2. **Delay Testing**
+
+   Random delays up to 10 seconds to simulate network latency.
+
+   If a response does not arrive within the client’s timeout, the client retries the transmission, 3 attempts in total.
+
+   **Example output:**
 
    `server.py`
 
@@ -621,7 +629,13 @@ This server includes built-in random fault simulation to test client resilience:
    [CLIENT] Received valid reply: Hey
    ```
 
-3. **Corruption Testing**: Randomly flip a bit of client message and implemented checksum validation
+3. **Corruption Testing**
+
+   Randomly flip a bit of client message.
+
+   The client validates the checksum in the reply and rejects messages with mismatched checksums.
+
+   **Example output:**
 
    `server.py`
 
@@ -648,7 +662,7 @@ This server includes built-in random fault simulation to test client resilience:
 
 ### 3.3.4 Usage Example 
 
-#### Start the server.
+#### Start server.
 
 ```cmd
 python server.py

@@ -1,0 +1,32 @@
+2025-09-13 11:20:13,620 - root - INFO - === Resilient Server Starting ===
+2025-09-13 11:20:13,621 - ServerMonitor - INFO - Server monitor started (reporting every 30s)
+2025-09-13 11:20:13,621 - root - INFO - All servers started successfully
+2025-09-13 11:20:13,621 - root - INFO - TCP Server: localhost:8080
+2025-09-13 11:20:13,621 - root - INFO - UDP Server: localhost:8081
+2025-09-13 11:20:13,621 - root - INFO - Press Ctrl+C to shutdown
+2025-09-13 11:20:13,622 - UDPServer - INFO - UDP Server listening on localhost:8081
+2025-09-13 11:20:13,622 - TCPServer - INFO - TCP Server listening on localhost:8080
+2025-09-13 11:20:23,355 - ClientManager - INFO - TCP client tcp_client_1 connected from ('127.0.0.1', 63710)
+2025-09-13 11:20:23,356 - TCPServer - INFO - Handling client tcp_client_1 from ('127.0.0.1', 63710)
+2025-09-13 11:20:36,846 - TCPServer - DEBUG - [tcp_client_1] Received: Hey|e4599fa9...
+2025-09-13 11:20:36,847 - FaultSimulator - WARNING - [TCP] Simulating data corruption for client tcp_client_1
+2025-09-13 11:20:36,848 - FaultSimulator - DEBUG - [TCP] Corrupted data: b'\xb7ey|e4599fa9' for client tcp_client_1
+2025-09-13 11:20:36,848 - TCPServer - DEBUG - [tcp_client_1] Sent response (12 bytes)
+2025-09-13 11:20:36,848 - TCPServer - INFO - Client tcp_client_1 disconnected gracefully
+2025-09-13 11:20:36,848 - ClientManager - INFO - TCP client tcp_client_1 disconnected. Session duration: 0:00:13.493296, Messages: 1 received, 1 sent
+2025-09-13 11:20:36,848 - TCPServer - INFO - Client tcp_client_1 handler terminated
+2025-09-13 11:20:43,625 - ServerMonitor - INFO - Server Stats - TCP Clients: 0, UDP Clients Seen: 0
+2025-09-13 11:20:43,627 - ServerMonitor - DEBUG - Detailed stats: {
+  "tcp_clients_active": 0,
+  "udp_clients_seen": 0,
+  "tcp_clients": {},
+  "udp_clients": {}
+}
+2025-09-13 11:20:50,407 - root - INFO - 
+Shutdown requested...
+2025-09-13 11:20:50,408 - root - INFO - Shutting down servers...
+2025-09-13 11:20:50,408 - TCPServer - INFO - TCP Server shutdown complete
+2025-09-13 11:20:50,408 - UDPServer - INFO - UDP Server shutdown complete
+2025-09-13 11:20:50,657 - UDPServer - INFO - UDP Server shutdown complete
+2025-09-13 11:20:51,382 - TCPServer - INFO - TCP Server shutdown complete
+2025-09-13 11:20:52,409 - root - INFO - === Server Shutdown Complete ===
