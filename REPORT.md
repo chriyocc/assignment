@@ -544,7 +544,7 @@ if __name__ == "__main__":
   - Network delay simulation (20% probability, up to 10 seconds)
 
   - Data corruption simulation (20% probability)
-  - No fault (20% probability)
+  - No fault (40% probability)
 
 - Echo functionality for message verification
 
@@ -741,6 +741,8 @@ python client.py
 ### 3.3.5 Analysis
 
 This resilient client-server system well demonstrates how network faults impact messages delivery and how fault tolerant mechanisms can solve these issues.
+
+(Explain SHA1)
 
 
 

@@ -2,103 +2,458 @@ import socket
 import sys
 import hashlib
 import time
+import base64
+import secrets
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import json
+import getpass
+
+class EncryptionManager:
+    """Handle message encryption and decryption"""
+    
+    def __init__(self, password=None):
+        self.fernet = None
+        self.enabled = False
+        self.password = password
+        if password:
+            self.setup_encryption(password)
+    
+    def setup_encryption(self, password):
+        """Set up encryption using password-based key derivation"""
+        try:
+            # Generate a random salt for this session
+            self.salt = secrets.token_bytes(16)
+            
+            # Derive key from password using PBKDF2
+            kdf = PBKDF2HMAC(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=self.salt,
+                iterations=100000,
+            )
+            key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+            print('-------------------')
+            print(key)
+            # Create Fernet cipher
+            self.fernet = Fernet(key)
+            print('-------------------')
+            print(self.fernet)
+            self.enabled = True
+            print("[ENCRYPTION] Encryption enabled")
+            return True
+        except Exception as e:
+            print(f"[ENCRYPTION] Failed to setup encryption: {e}")
+            return False
+    
+    def encrypt_message(self, message):
+        """Encrypt a message"""
+        if not self.enabled:
+            return message
+        
+        try:
+            encrypted = self.fernet.encrypt(message.encode())
+            # Include salt with encrypted message for decryption
+            payload = {
+                'encrypted': base64.urlsafe_b64encode(encrypted).decode(),
+                'salt': base64.urlsafe_b64encode(self.salt).decode(),
+                'encrypted_flag': True
+            }
+            return json.dumps(payload)
+        except Exception as e:
+            print(f"[ENCRYPTION] Encryption failed: {e}")
+            return message
+    
+    def decrypt_message(self, encrypted_data):
+        """Decrypt a message"""
+        if not self.enabled:
+            return encrypted_data
+        
+        try:
+            # Try to parse as JSON (encrypted format)
+            print('1-------------')
+            try:
+                payload = json.loads(encrypted_data)
+                if not payload.get('encrypted_flag', False):
+                    return encrypted_data  # Not encrypted
+            except (json.JSONDecodeError, KeyError):
+                return encrypted_data  # Not encrypted format
+            print('2-------------')
+            # Decrypt the message
+            encrypted_bytes = base64.urlsafe_b64decode(payload['encrypted'].encode())
+            print('3-------------')
+            decrypted = self.fernet.decrypt(encrypted_bytes)
+            print('4-------------')
+            
+            return decrypted.decode()
+        except Exception as e:
+            print(f"[ENCRYPTION] Decryption failed: {e}")
+            return encrypted_data
 
 class ResilientClient:
-    def __init__(self, host="localhost", port=8080, protocol="TCP"):
+    def __init__(self, host="localhost", port=8080, protocol="TCP", encryption_password=None):
         self.host = host
         self.port = port
         self.protocol = protocol.upper()
         self.sock = None
+        self.encryption_password = encryption_password
+        self.handshake_completed = False
+        
+        # Initialize encryption manager
+        self.encryption = EncryptionManager(encryption_password)
+        
+        # Statistics
+        self.stats = {
+            'messages_sent': 0,
+            'messages_received': 0,
+            'retries': 0,
+            'timeouts': 0,
+            'checksum_mismatches': 0,
+            'connection_resets': 0
+        }
 
     def checksum(self, msg: str) -> str:
-        """Simple SHA1-based checksum for message integrity."""
-        return hashlib.sha1(msg.encode()).hexdigest()[:8]
+        """Enhanced SHA256-based checksum for better security."""
+        return hashlib.sha256(msg.encode()).hexdigest()[:16]
     
     def checkmsg(self, msg: str):
+        """Enhanced message validation"""
         if not msg.strip():
+            print("[CLIENT] Empty message not allowed")
             return False
         
-        if any(x in msg.lower() for x in ["drop table", "shutdown", "malware"]):
-            print("[CLIENT] Invalid or unsafe message")
+        if len(msg) > 1000:
+            print("[CLIENT] Message too long (max 1000 characters)")
+            return False
+        
+        suspicious_patterns = [
+            "drop table", "delete from", "insert into", "update set",
+            "shutdown", "malware", "<script>", "javascript:", 
+            "exec(", "eval(", "system(", "__import__"
+        ]
+        
+        if any(pattern in msg.lower() for pattern in suspicious_patterns):
+            print("[CLIENT] Message contains potentially unsafe content")
             return False
         
         return True
 
     def connect(self):
-        """Establish connection depending on protocol."""
+        """Establish connection and perform handshake."""
         try:
             if self.protocol == "TCP":
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.sock.settimeout(15)
                 self.sock.connect((self.host, self.port))
                 print(f"[CLIENT] Connected to {self.host}:{self.port} via TCP")
+                
+                # Perform handshake for TCP connections
+                if not self.perform_handshake():
+                    print("[CLIENT] Handshake failed")
+                    self.close()
+                    return False
+                    
             elif self.protocol == "UDP":
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                self.sock.settimeout(10)
                 print(f"[CLIENT] Ready to send to {self.host}:{self.port} via UDP")
+                self.handshake_completed = True  # UDP doesn't need handshake
             else:
                 raise ValueError("Unsupported protocol. Use TCP or UDP.")
+            
+            return True
+            
         except Exception as e:
-            print(f"[CLIENT] Connection error: {e}")
-            sys.exit(1)
+            print(f"[CLIENT] Connection failed: {e}")
+            return False
+    
+    def perform_handshake(self):
+        """Perform handshake with server to establish encryption parameters"""
+        try:
+            print("[CLIENT] Waiting for handshake request...")
+            
+            # Wait for server handshake request
+            self.sock.settimeout(15.0)
+            handshake_request = self.sock.recv(1024).decode()
+            
+            if not handshake_request.startswith("HANDSHAKE_REQUEST|"):
+                print(f"[CLIENT] Unexpected handshake: {handshake_request}")
+                return False
+            
+            print("[CLIENT] Received handshake request from server")
+            
+            # Send handshake response
+            if self.encryption.enabled:
+                response = f"HANDSHAKE_RESPONSE|ENCRYPTED|{self.encryption_password}"
+                print("[CLIENT] Requesting encrypted communication")
+            else:
+                response = "HANDSHAKE_RESPONSE|PLAIN|"
+                print("[CLIENT] Requesting plain text communication")
+            
+            self.sock.sendall(response.encode())
+            
+            # Wait for server acknowledgment
+            ack = self.sock.recv(1024).decode()
+            
+            if ack.startswith("HANDSHAKE_ACK|"):
+                ack_parts = ack.split("|")
+                if len(ack_parts) >= 2:
+                    ack_status = ack_parts[1]
+                    
+                    if ack_status == "ENCRYPTION_ENABLED":
+                        print("[CLIENT] ✓ Server confirmed encryption enabled")
+                        self.handshake_completed = True
+                        return True
+                    elif ack_status == "PLAIN_MODE":
+                        print("[CLIENT] ✓ Server confirmed plain text mode")
+                        self.handshake_completed = True
+                        return True
+                    elif ack_status == "ENCRYPTION_FAILED":
+                        print("[CLIENT] ✗ Server failed to enable encryption")
+                        return False
+            
+            print(f"[CLIENT] Unexpected handshake ack: {ack}")
+            return False
+            
+        except Exception as e:
+            print(f"[CLIENT] Handshake failed: {e}")
+            return False
 
-    def send_message(self, msg: str, retries=3, timeout=3):
-        """Send a message with basic fault tolerance."""
-        payload = f"{msg}|{self.checksum(msg)}"
+    def prepare_message(self, msg: str):
+        """Prepare message with optional encryption and checksum"""
+        # Encrypt if enabled
+        if self.encryption.enabled:
+            print("[CLIENT] Encrypting message...")
+            encrypted_msg = self.encryption.encrypt_message(msg)
+            payload = f"{encrypted_msg}|{self.checksum(encrypted_msg)}|ENCRYPTED"
+        else:
+            payload = f"{msg}|{self.checksum(msg)}|PLAIN"
+        
+        return payload
+
+    def parse_response(self, response):
+        """Parse and validate server response"""
+        try:
+            parts = response.split("|")
+            if len(parts) < 2:
+                print("[CLIENT] Invalid response format")
+                return None, False
+            
+            # Handle different message formats
+            if len(parts) >= 3 and parts[2] == "ENCRYPTED":
+                body, recv_checksum = parts[0], parts[1]
+                is_encrypted = True
+            else:
+                body, recv_checksum = parts[0], parts[1]
+                is_encrypted = len(parts) >= 3 and parts[2] == "ENCRYPTED"
+            
+            # Verify checksum
+            curr_checksum = self.checksum(body)
+            print(f"[CLIENT] Checksum - Current: {curr_checksum[:8]}..., Received: {recv_checksum[:8]}...")
+            
+            if curr_checksum != recv_checksum:
+                print("[CLIENT] Checksum mismatch (possible corruption)")
+                self.stats['checksum_mismatches'] += 1
+                return None, False
+            
+            # Decrypt if necessary
+            if is_encrypted and self.encryption.enabled:
+                print("[CLIENT] Decrypting response...")
+                decrypted_body = self.encryption.decrypt_message(body)
+                return decrypted_body, True
+            
+            return body, True
+            
+        except Exception as e:
+            print(f"[CLIENT] Error parsing response: {e}")
+            return None, False
+
+    def send_message(self, msg: str, retries=3, timeout=10):
+        """Send a message with enhanced fault tolerance."""
+        if not self.checkmsg(msg):
+            return False
+        
+        # Ensure handshake is completed for TCP
+        if self.protocol == "TCP" and not self.handshake_completed:
+            print("[CLIENT] Handshake not completed, cannot send message")
+            return False
+        
+        payload = self.prepare_message(msg)
         attempts = 0
-        print(f"[CLIENT] Message is ready to send: ({payload})")
+        
+        print(f"[CLIENT] Prepared payload (length: {len(payload)} chars)")
 
         while attempts < retries:
-            print(f"[CLIENT] Attempts: {attempts + 1}")
+            attempts += 1
+            print(f"[CLIENT] Attempt {attempts}/{retries}")
+            
             try:
+                # Send message
                 if self.protocol == "TCP":
                     self.sock.send(payload.encode())
                     self.sock.settimeout(timeout)
-                    reply = self.sock.recv(1024).decode(errors="replace") 
+                    reply = self.sock.recv(4096).decode(errors="replace")
                 else:  # UDP
                     self.sock.sendto(payload.encode(), (self.host, self.port))
-                    break
+                    reply, _ = self.sock.recvfrom(4096)
+                    reply = reply.decode(errors="replace")
 
-                print(f"[CLIENT] Message received: {reply}")
+                if not reply:
+                    print("[CLIENT] Empty response received")
+                    continue
 
-                # Validate reply
-                if "|" in reply:
-                    body, recv_checksum = reply.split("|", 1)
-                    curr_checksum = self.checksum(body)
-                    print(f"[CLIENT] Current: {curr_checksum} & Original: {recv_checksum}")
+                self.stats['messages_sent'] += 1
+                print(f"[CLIENT] Raw response received (length: {len(reply)} chars)")
 
-                    if curr_checksum == recv_checksum:
-                        print(f"[CLIENT] Received valid reply: {body}")
-                        return
-                    else:
-                        print("[CLIENT] Checksum mismatch (possible corruption)")
-                        return
+                # Check for handshake requests (shouldn't happen after initial handshake)
+                if reply.startswith("HANDSHAKE_REQUEST"):
+                    print("[CLIENT] Unexpected handshake request - connection may have been reset")
+                    self.handshake_completed = False
+                    if not self.perform_handshake():
+                        print("[CLIENT] Re-handshake failed")
+                        return False
+                    continue
+
+                # Parse and validate response
+                parsed_body, is_valid = self.parse_response(reply)
+                
+                if is_valid and parsed_body is not None:
+                    print(f"[CLIENT] ✓ Successfully received: {parsed_body}")
+                    self.stats['messages_received'] += 1
+                    return True
                 else:
-                    print("[CLIENT] Invalid format (possible attack)")
+                    print("[CLIENT] Invalid response received")
+                    continue
 
             except socket.timeout:
-                print("[CLIENT] Timeout, retrying...")
+                print(f"[CLIENT] Timeout on attempt {attempts}")
+                self.stats['timeouts'] += 1
+                if attempts < retries:
+                    print(f"[CLIENT] Retrying in 2 seconds...")
+                    time.sleep(2)
+                    
             except ConnectionResetError:
-                print("[CLIENT] Connection reset by server, retrying...")
-                self.connect()  # attempt reconnection
+                print("[CLIENT] Connection reset by server")
+                self.stats['connection_resets'] += 1
+                if attempts < retries:
+                    print("[CLIENT] Attempting to reconnect...")
+                    self.close()
+                    if not self.connect():
+                        break
+                        
             except Exception as e:
                 print(f"[CLIENT] Unexpected error: {e}")
+                if attempts < retries:
+                    time.sleep(1)
 
-            attempts += 1
+            self.stats['retries'] += 1
 
+        print(f"[CLIENT] ✗ Failed to send message after {retries} attempts")
+        return False
+
+    def print_stats(self):
+        """Print client statistics"""
+        print("\n=== CLIENT STATISTICS ===")
+        for key, value in self.stats.items():
+            print(f"{key.replace('_', ' ').title()}: {value}")
+        print("========================")
 
     def close(self):
+        """Close connection and cleanup"""
         if self.sock:
+            try:
+                if self.protocol == "TCP":
+                    self.sock.shutdown(socket.SHUT_RDWR)
+            except:
+                pass
+            
             self.sock.close()
-            time.sleep(1)
-            if self.protocol == "TCP":
-                print("[CLIENT] Connection closed")
+            self.sock = None
+            self.handshake_completed = False
+            print("[CLIENT] Connection closed")
 
+def get_user_input():
+    """Get user configuration"""
+    print("\n=== SIMPLE CLIENT CONFIGURATION ===")
+    
+    # Protocol selection
+    while True:
+        protocol = input("Choose protocol (TCP/UDP) [TCP]: ").strip().upper()
+        if not protocol:
+            protocol = "TCP"
+        if protocol in ["TCP", "UDP"]:
+            break
+        print("Please enter TCP or UDP")
+    
+    # Server details
+    host = input("Server host [localhost]: ").strip() or "localhost"
+    
+    while True:
+        try:
+            port_input = input("Server port [8080]: ").strip()
+            port = int(port_input) if port_input else 8080
+            if 1 <= port <= 65535:
+                break
+            print("Port must be between 1 and 65535")
+        except ValueError:
+            print("Please enter a valid port number")
+    
+    # Encryption option
+    while True:
+        encrypt_choice = input("Enable encryption? (y/N): ").strip().lower()
+        if encrypt_choice in ['', 'n', 'no']:
+            encryption_password = None
+            break
+        elif encrypt_choice in ['y', 'yes']:
+            encryption_password = getpass.getpass("Enter encryption password: ")
+            if encryption_password:
+                break
+            else:
+                print("Password cannot be empty for encryption")
+        else:
+            print("Please enter y/yes or n/no")
+    
+    return protocol, host, port, encryption_password
+
+def main():
+    """Simple main function"""
+    try:
+        # Get configuration
+        protocol, host, port, encryption_password = get_user_input()
+        
+        # Create and connect client
+        client = ResilientClient(host, port, protocol, encryption_password)
+        
+        if not client.connect():
+            print("[CLIENT] Failed to connect to server")
+            return
+        
+        print(f"\n=== CONNECTED TO {host}:{port} VIA {protocol} ===")
+        if client.encryption.enabled:
+            print("🔒 Encryption: ENABLED")
+        else:
+            print("🔓 Encryption: DISABLED")
+        
+        # Get message to send
+        message = input("\n[CLIENT] Enter message: ")
+        if message.strip():
+            success = client.send_message(message)
+            if success:
+                print("[CLIENT] ✓ Message sent successfully!")
+            else:
+                print("[CLIENT] ✗ Failed to send message")
+        
+        client.print_stats()
+    
+    except KeyboardInterrupt:
+        print("\n[CLIENT] Interrupted by user")
+    except Exception as e:
+        print(f"[CLIENT] Unexpected error: {e}")
+    finally:
+        if 'client' in locals():
+            client.close()
+        print("[CLIENT] Goodbye!")
 
 if __name__ == "__main__":
-    # Example usage:
-    protocol_input = input("[CLIENT] Choose UDP/TCP: ")
-    client = ResilientClient(host="localhost", port=8080, protocol=protocol_input)
-    client.connect()
-    msg_input = input("[CLIENT] Enter something: ")
-    if client.checkmsg(msg_input) :
-        client.send_message(msg_input)
-    client.close()
+    main()
