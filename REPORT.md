@@ -524,29 +524,17 @@ if __name__ == "__main__":
 
 ### 3.3.2 Features
 
-#### Client-side
-
-- Support for both TCP and UDP protocols
-- Message integrity verification using SHA1 checksums
-- Automatic retry mechanism with configurable attempts
-- Connection timeout handling
-- Automatic reconnection on connection reset
-- Input validation and security checks malicious content
-
-#### Server-side
-
-- Support for both TCP and UDP protocols
-
-- Fault simulation for testing resilience:
-
+- **Dual Protocol Support**: Both TCP and UDP communication protocols
+- **Security**: Input validation and security checks malicious content
+- **Fault Tolerance**: Automatic retry mechanisms, connection recovery, and error handling
+- **Message Integrity**: Message integrity verification using SHA1 checksums, SHA-1 (Secure Hash Algorithm 1) is a cryptographic hash function that generates a 160-bit (40-hexadecimal-digit) hash value from any input data. 
+- **Fault simulation: ** Simulate network errors such as network delay, package corruption and packet loss
   - Packet loss simulation (20% probability)
-
+  
   - Network delay simulation (20% probability, up to 10 seconds)
-
+  
   - Data corruption simulation (20% probability)
   - No fault (40% probability)
-
-- Echo functionality for message verification
 
 
 
@@ -660,9 +648,9 @@ This server includes built-in random fault simulation to test client resilience:
 
 
 
-### 3.3.4 Usage Example 
+### 3.3.4 Example Usage
 
-#### Start server.
+#### Start server
 
 ```cmd
 python server.py
@@ -670,7 +658,7 @@ python server.py
 
 
 
-#### Start client.
+#### Start client
 
 ```
 python client.py
@@ -742,13 +730,278 @@ python client.py
 
 This resilient client-server system well demonstrates how network faults impact messages delivery and how fault tolerant mechanisms can solve these issues.
 
-(Explain SHA1)
-
 
 
 ### 3.3.6 Improvements
 
-- Implement SSL/TLS encryption support
+- Implement safer encryption support
 - Authentication mechanisms
 - Supports multiple clients simultaneously
 - Logging framework integration
+
+
+
+## 3.4 Designing & Testing a Echo Server
+
+### 3.4.1 Overview
+
+This system is a robust network server implementation that supports multiple concurrent clients through both TCP and UDP protocols. It features advanced security mechanisms, comprehensive fault tolerance, detailed logging, and scalable designed to handle real-world deployment scenarios.
+
+**Source code:** https://github.com/chriyocc/assignment
+
+### 3.4.2 Features
+
+- **Concurrent Multi-Client Support**: Handles multiple simultaneous connections
+- **Dual Protocol Support**: Both TCP and UDP communication protocols
+- **Advanced Security**: Diffie-Hellman key exchange with AES encryption
+- **Fault Tolerance**: Automatic retry mechanisms, connection recovery, and error handling
+- **Comprehensive Logging**: Multi-level logging with file and console output
+- **Message Integrity**: SHA256 checksums for data validation
+- **Scalability**: Modular design supporting horizontal scaling
+- **Fault simulation: ** Simulate network errors such as network delay, package corruption and packet loss
+
+
+
+### 3.4.3 Main Components
+
+#### 1. EncryptionManager
+
+EncryptionManager class handles all the cryptographic operations including Diffie-Hellman(DH) key exchange and message encryption and decryption.
+
+**Diffie–Hellman** (**DH**) **key exchange **is a mathematical method of securely generating a symmetric cryptographic key over a public channel.
+
+**Key Methods**:
+
+- `initialize_dh_parameters()`: Sets up DH parameters for key exchange
+- `compute_shared_key()`: Computes shared encryption keys with clients
+- `encrypt_message()` / `decrypt_message()`: AES encryption using Fernet
+- `get_dh_parameters_bytes()`: Returns DH parameters for client handshake
+
+**Features:**
+
+- 2048-bit Diffie-Hellman key exchange
+- HKDF (HMAC-based Key Derivation Function) for key derivation
+- Unique keys per client session
+
+#### 2. MessageProcessor
+
+The MessageProcessor class handles the incoming messages, validates integrity and generates responses.
+
+**Key Methods**:
+
+- `parse_message()`: Parses and validates incoming message format
+- `create_response()`: Generates echo responses
+- `checksum()`: SHA256-based message integrity verification
+
+#### 3. ClientManager
+
+The ClientManager handles the client connections and states.
+
+**Key Methods**:
+
+- `add_tcp_client()`: Registers new TCP clients
+- `update_tcp_stats()`: Updates per-client statistics
+- `remove_tcp_client()`: Cleanup on client disconnection
+
+#### 4. EnhancedTCPServer
+
+The main TCP server that handle multiple client connections.
+
+**Key Methods**:
+
+- `handle_client()`: Per-client connection handler
+- `perform_dh_key_exchange()`: Secure handshake implementation
+- `start_server()`: Server initialization and binding
+
+#### 5. EnhancedUDPServer
+
+Handle UDP message connectionless. Parallel operation with TCP server.
+
+### 3.4.4 Secuirity Features
+
+#### Encryption Steps
+
+1. **Server Initialization**: Generates DH parameters (2048-bit)
+2. **Client Handshake**: Client requests encrypted communication
+3. **Parameter Exchange**: Server sends DH parameters
+4. **Key Generation**: Both parties generate private/public key pairs
+5. **Key Exchange**: Public keys are exchanged
+6. **Shared Secret**: Both compute identical shared secret
+7. **Key Derivation**: HKDF derives AES key from shared secret
+
+
+
+#### Message Security
+
+- **Integrity**: SHA256 checksums prevent message tampering
+- **Confidentiality**: AES encryption protects message content
+
+
+
+#### Input Validation
+
+- Suspicious pattern detection (SQL injection, XSS, code execution)
+
+  ```python
+  suspicious_patterns = [
+              "drop table", "delete from", "insert into", "update set",
+              "shutdown", "malware", "<script>", "javascript:", 
+              "exec(", "eval(", "system(", "__import__"
+          ]
+  ```
+
+  
+
+## 3.4.5 Example Usage
+
+#### Start Server
+
+```bash
+python server.py
+```
+
+**Server Startup Process**:
+
+1. Initializes encryption components
+2. Creates log directory and files
+3. Starts TCP server on port 8080
+4. Starts UDP server on same port
+5. Displays configuration summary
+
+
+
+### Start Client
+
+```bash
+python client_1.py
+```
+
+```bash
+python client_2.py
+```
+
+**Client options:**
+
+1. Protocol: TCP or UDP
+2. Server host: localhost (default) or custom IP
+3. Server port: 8080 (default) or custom port
+
+
+
+#### Example Terminal Session
+
+`server.py`
+
+```bash
+21:54:46 [INFO] === Enhanced Resilient Server Starting ===
+
+=== ENHANCED SERVER CONFIGURATION ===
+Server Encryption Setup:
+Note: Clients can connect with or without encryption
+DH key exchange will be used for secure connections
+Waiting server to start...
+21:54:49 [INFO] DH parameters initialized successfully
+21:54:49 [INFO] Enhanced server started successfully
+21:54:49 [INFO] TCP and UDP Server: localhost:8080
+21:54:49 [INFO] 🔒 Encryption: Modern DH key exchange enabled
+21:54:49 [INFO] Server supports both encrypted and plain text clients
+21:54:49 [INFO] Press Ctrl+C to shutdown
+21:54:49 [INFO] Enhanced TCP Server listening on localhost:8080
+21:54:49 [INFO] UDP Server listening on localhost:8080
+21:54:56 [INFO] Handling client tcp_client_1 from ('127.0.0.1', 51364)
+21:54:56 [INFO] Shared key computed for client tcp_client_1
+21:54:56 [INFO] Secure DH encryption enabled for client tcp_client_1
+21:55:08 [INFO] Received encrypted message from client tcp_client_1
+21:55:08 [INFO] Decrypted message from tcp_client_1: Hello From Client....
+21:55:08 [INFO] Client tcp_client_1 disconnected.
+21:55:08 [INFO] TCP client tcp_client_1 (encrypted) disconnected. Duration: 0:00:12.317616
+21:55:08 [INFO] Client tcp_client_1 handler terminated
+^C21:55:13 [INFO] 
+Shutdown requested...
+21:55:13 [INFO] Shutting down server...
+21:55:13 [INFO] Enhanced TCP Server shutdown complete
+21:55:13 [ERROR] Error handling UDP message: [Errno 9] Bad file descriptor
+21:55:13 [INFO] UDP Server shutdown complete
+21:55:13 [INFO] UDP Server shutdown complete
+21:55:14 [INFO] Enhanced TCP Server shutdown complete
+21:55:15 [INFO] === Enhanced Server Shutdown Complete ===
+```
+
+
+
+`client.py`
+
+```bash
+=== SIMPLE CLIENT CONFIGURATION ===
+Choose protocol (TCP/UDP) [TCP]: 
+Server host [localhost]: 
+Server port [8080]: 
+[CLIENT] Connected to localhost:8080 via TCP
+[CLIENT] Waiting for handshake request...
+[CLIENT] Received handshake request from server (protocol: V2)
+[CLIENT] Requesting secure DH encrypted communication
+[ENCRYPTION] DH key pair generated
+[ENCRYPTION] Secure DH encryption enabled
+[CLIENT] ✓ Server confirmed secure DH encryption enabled
+
+=== CONNECTED TO localhost:8080 VIA TCP ===
+🔒 Encryption: ENABLED
+
+[CLIENT] Enter message: Hello From Client.
+[CLIENT] Encrypting message...
+[CLIENT] Prepared payload (length: 260 chars)
+[CLIENT] Attempt 1/3
+[CLIENT] Raw response received (length: 264 chars)
+[CLIENT] Checksum - Current: c641dfc9..., Received: c641dfc9...
+[CLIENT] Decrypting response...
+[CLIENT] ✓ Successfully received: ECHO: Hello From Client.
+[CLIENT] ✓ Message sent successfully!
+
+=== CLIENT STATISTICS ===
+Messages Sent: 1
+Messages Received: 1
+Timeouts: 0
+Checksum Mismatches: 0
+Connection Resets: 0
+========================
+[CLIENT] Connection closed
+[CLIENT] Goodbye!
+```
+
+
+
+`server_YYYYMMDD_HHMMSS.log`
+
+```bash
+2025-09-14 21:54:46,982 - root - INFO - === Enhanced Resilient Server Starting ===
+2025-09-14 21:54:49,919 - EncryptionManager - INFO - DH parameters initialized successfully
+2025-09-14 21:54:49,919 - root - INFO - Enhanced server started successfully
+2025-09-14 21:54:49,919 - root - INFO - TCP and UDP Server: localhost:8080
+2025-09-14 21:54:49,920 - root - INFO - 🔒 Encryption: Modern DH key exchange enabled
+2025-09-14 21:54:49,920 - root - INFO - Server supports both encrypted and plain text clients
+2025-09-14 21:54:49,920 - root - INFO - Press Ctrl+C to shutdown
+2025-09-14 21:54:49,921 - TCPServer - INFO - Enhanced TCP Server listening on localhost:8080
+2025-09-14 21:54:49,921 - UDPServer - INFO - UDP Server listening on localhost:8080
+2025-09-14 21:54:56,382 - TCPServer - INFO - Handling client tcp_client_1 from ('127.0.0.1', 51364)
+2025-09-14 21:54:56,383 - TCPServer - DEBUG - Sent handshake request to tcp_client_1
+2025-09-14 21:54:56,418 - EncryptionManager - INFO - Shared key computed for client tcp_client_1
+2025-09-14 21:54:56,424 - TCPServer - INFO - Secure DH encryption enabled for client tcp_client_1
+2025-09-14 21:55:08,692 - MessageProcessor - INFO - Received encrypted message from client tcp_client_1
+2025-09-14 21:55:08,695 - EncryptionManager - DEBUG - Successfully decrypted message for client tcp_client_1
+2025-09-14 21:55:08,695 - MessageProcessor - INFO - Decrypted message from tcp_client_1: Hello From Client....
+2025-09-14 21:55:08,696 - TCPServer - DEBUG - [tcp_client_1] Sent response (264 bytes)
+2025-09-14 21:55:08,696 - TCPServer - INFO - Client tcp_client_1 disconnected.
+2025-09-14 21:55:08,697 - ClientManager - INFO - TCP client tcp_client_1 (encrypted) disconnected. Duration: 0:00:12.317616
+2025-09-14 21:55:08,697 - TCPServer - INFO - Client tcp_client_1 handler terminated
+2025-09-14 21:55:13,587 - root - INFO - 
+Shutdown requested...
+2025-09-14 21:55:13,587 - root - INFO - Shutting down server...
+2025-09-14 21:55:13,587 - TCPServer - INFO - Enhanced TCP Server shutdown complete
+2025-09-14 21:55:13,587 - UDPServer - ERROR - Error handling UDP message: [Errno 9] Bad file descriptor
+2025-09-14 21:55:13,587 - UDPServer - INFO - UDP Server shutdown complete
+2025-09-14 21:55:13,587 - UDPServer - INFO - UDP Server shutdown complete
+2025-09-14 21:55:14,400 - TCPServer - INFO - Enhanced TCP Server shutdown complete
+2025-09-14 21:55:15,593 - root - INFO - === Enhanced Server Shutdown Complete ===
+
+```
+

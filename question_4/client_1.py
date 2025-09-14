@@ -139,19 +139,15 @@ class EncryptionManager:
         
         try:
             # Try to parse as JSON (encrypted format)
-            print('1-------------')
             try:
                 payload = json.loads(encrypted_data)
                 if not payload.get('encrypted_flag', False):
                     return encrypted_data  # Not encrypted
             except (json.JSONDecodeError, KeyError):
                 return encrypted_data  # Not encrypted format
-            print('2-------------')
             # Decrypt the message
             encrypted_bytes = base64.urlsafe_b64decode(payload['encrypted'].encode())
-            print('3-------------')
             decrypted = self.fernet.decrypt(encrypted_bytes)
-            print('4-------------')
             
             return decrypted.decode()
         except Exception as e:
