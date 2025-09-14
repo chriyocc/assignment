@@ -11,6 +11,10 @@ import base64
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives.asymmetric import dh
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat, load_der_public_key, ParameterFormat
+from cryptography.hazmat.primitives.serialization import load_der_parameters, load_der_private_key
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 import getpass
 
 class EncryptionManager:
@@ -18,14 +22,83 @@ class EncryptionManager:
     
     def __init__(self):
         self.encryption_keys = {}  # Store multiple encryption keys by client ID
+        self.dh_parameters = None  # DH parameters for key exchange
+        self.private_keys = {}     # Store server's private keys for each client
+        self.shared_keys = {}      # Store derived shared keys
         self.logger = logging.getLogger('EncryptionManager')
+        self.initialize_dh_parameters()
     
-    def add_client_key(self, client_id, password):
-        """Add encryption key for a specific client"""
+    def initialize_dh_parameters(self):
+        """Initialize Diffie-Hellman parameters"""
         try:
-            # Note: In production, you'd want a more secure key exchange mechanism
-            # This is simplified for demonstration
-            self.encryption_keys[client_id] = password
+            # Generate parameters with 2048-bit key size (can be increased for more security)
+            self.dh_parameters = dh.generate_parameters(generator=2, key_size=2048)
+            self.logger.info("DH parameters initialized successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize DH parameters: {e}")
+    
+    def get_dh_parameters_bytes(self):
+        """Get DH parameters as bytes for sending to client"""
+        if not self.dh_parameters:
+            return None
+        return self.dh_parameters.parameter_bytes(Encoding.DER, ParameterFormat.PKCS3)
+    
+    def generate_dh_private_key(self, client_id):
+        """Generate server's private key for a specific client"""
+        try:
+            if not self.dh_parameters:
+                self.logger.error("DH parameters not initialized")
+                return None
+                
+            private_key = self.dh_parameters.generate_private_key()
+            self.private_keys[client_id] = private_key
+            return private_key
+        except Exception as e:
+            self.logger.error(f"Failed to generate private key: {e}")
+            return None
+    
+    def get_public_key_bytes(self, client_id):
+        """Get server's public key as bytes for a specific client"""
+        if client_id not in self.private_keys:
+            if not self.generate_dh_private_key(client_id):
+                return None
+                
+        public_key = self.private_keys[client_id].public_key()
+        return public_key.public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
+    
+    def compute_shared_key(self, client_id, client_public_key_bytes):
+        """Compute shared key using client's public key"""
+        try:
+            if client_id not in self.private_keys:
+                self.logger.error(f"No private key for client {client_id}")
+                return False
+                
+            # Load client's public key
+            client_public_key = load_der_public_key(client_public_key_bytes)
+            
+            # Compute shared key
+            shared_key = self.private_keys[client_id].exchange(client_public_key)
+            
+            # Derive encryption key using HKDF
+            derived_key = HKDF(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=None,
+                info=b'handshake data',
+            ).derive(shared_key)
+            
+            # Store the derived key
+            self.encryption_keys[client_id] = base64.urlsafe_b64encode(derived_key)
+            self.logger.info(f"Shared key computed for client {client_id}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to compute shared key for {client_id}: {e}")
+            return False
+    
+    def add_client_key(self, client_id, key):
+        """Add encryption key for a specific client (legacy method)"""
+        try:
+            self.encryption_keys[client_id] = key
             self.logger.info(f"Encryption key registered for client {client_id}")
             return True
         except Exception as e:
@@ -35,6 +108,12 @@ class EncryptionManager:
     def create_fernet_from_password_and_salt(self, password, salt):
         """Create Fernet cipher from password and salt"""
         try:
+            # Check if password is already a base64 encoded key (from DH exchange)
+            if isinstance(password, bytes):
+                # Already a derived key, just use it
+                return Fernet(password)
+                
+            # Legacy mode - derive key from password
             kdf = PBKDF2HMAC(
                 algorithm=hashes.SHA256(),
                 length=32,
@@ -42,8 +121,6 @@ class EncryptionManager:
                 iterations=100000,
             )
             key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
-            print("----------------")
-            print(key)
             return Fernet(key)
         except Exception as e:
             self.logger.error(f"Failed to create Fernet cipher: {e}")
@@ -58,7 +135,7 @@ class EncryptionManager:
             if not payload.get('encrypted_flag', False):
                 return encrypted_data  # Not encrypted
             
-            # Get client's password (in production, this would be more secure)
+            # Get client's password or DH-derived key (in production, this would be more secure)
             password = self.encryption_keys.get(client_id)
             if not password:
                 self.logger.warning(f"No encryption key found for client {client_id}")
@@ -68,8 +145,14 @@ class EncryptionManager:
             salt = base64.urlsafe_b64decode(payload['salt'].encode())
             encrypted_bytes = base64.urlsafe_b64decode(payload['encrypted'].encode())
             
-            # Create cipher and decrypt
-            fernet = self.create_fernet_from_password_and_salt(password, salt)
+            # Check if this is a DH-derived key (already in bytes format)
+            if isinstance(password, bytes):
+                # DH mode - use the key directly
+                fernet = Fernet(password)
+            else:
+                # Legacy mode - derive key from password and salt
+                fernet = self.create_fernet_from_password_and_salt(password, salt)
+                
             if not fernet:
                 return "[DECRYPTION_ERROR: Failed to create cipher]"
             
@@ -259,13 +342,13 @@ class ClientManager:
                 'messages_received': 0,
                 'bytes_sent': 0,
                 'bytes_received': 0,
-                'encrypted': encryption_password is not None
+                'encrypted': False  # Will be updated during handshake process
             }
             
-            # Register encryption key if provided
+            # Register encryption key if provided (only for legacy V1 protocol)
             if encryption_password:
                 self.encryption_manager.add_client_key(client_id, encryption_password)
-                self.logger.info(f"TCP client {client_id} connected with encryption from {addr}")
+                self.logger.info(f"TCP client {client_id} connected with legacy encryption from {addr}")
             else:
                 self.logger.info(f"TCP client {client_id} connected (plain) from {addr}")
     
@@ -463,52 +546,34 @@ class EnhancedTCPServer(threading.Thread):
             self.logger.info(f"Client {client_id} handler terminated")
     
     def perform_key_exchange(self, conn, client_id, server_password):
-        """Perform simple key exchange handshake with client"""
+        """Perform secure key exchange handshake with client using Diffie-Hellman"""
         try:
-            # Send handshake request
-            handshake_request = "HANDSHAKE_REQUEST|SERVER_READY"
+            # Send handshake request with protocol version
+            handshake_request = "HANDSHAKE_REQUEST|SERVER_READY|V2"
             conn.sendall(handshake_request.encode())
             self.logger.debug(f"Sent handshake request to {client_id}")
             
             # Wait for client response
-            conn.settimeout(10.0)  # 10 second timeout for handshake
+            conn.settimeout(15.0)  # 15 second timeout for handshake
             response = conn.recv(1024).decode()
             
             if response.startswith("HANDSHAKE_RESPONSE|"):
                 parts = response.split("|")
-                if len(parts) >= 3:
-                    encryption_mode = parts[1]  # ENCRYPTED or PLAIN
-                    
-                    if encryption_mode == "ENCRYPTED" and len(parts) >= 3:
-                        # Client wants encryption and provided password
-                        client_password = parts[2]
-
-                        if client_password != server_password:
-                            print("[WARNING] Client password should be same as server password.")
-                            self.logger.warning('Client password not match.')
-                            return False
-                        
-                        # Register the encryption key
-                        success = self.client_manager.encryption_manager.add_client_key(client_id, client_password)
-                        
-                        if success:
-                            # Update client info
-                            if self.client_manager:
-                                with self.client_manager.lock:
-                                    if client_id in self.client_manager.tcp_clients:
-                                        self.client_manager.tcp_clients[client_id]['encrypted'] = True
-                            
-                            response_msg = "HANDSHAKE_ACK|ENCRYPTION_ENABLED"
-                            self.logger.info(f"Encryption enabled for client {client_id}")
-                        else:
-                            response_msg = "HANDSHAKE_ACK|ENCRYPTION_FAILED"
-                            self.logger.error(f"Failed to enable encryption for client {client_id}")
+                encryption_mode = parts[1] if len(parts) >= 2 else "PLAIN"  # ENCRYPTED or PLAIN
+                protocol_version = parts[2] if len(parts) >= 3 else "V1"    # V1 or V2
+                
+                if encryption_mode == "ENCRYPTED":
+                    # Handle based on protocol version
+                    if protocol_version == "V2":
+                        # Modern DH key exchange (no password needed)
+                        return self.perform_dh_key_exchange(conn, client_id)
                     else:
-                        # Client wants plain text communication
-                        response_msg = "HANDSHAKE_ACK|PLAIN_MODE"
-                        self.logger.info(f"Plain text mode for client {client_id}")
-                    
-                    # Send acknowledgment
+                        # Legacy password-based exchange
+                        return self.perform_legacy_key_exchange(conn, client_id, server_password, parts)
+                else:
+                    # Client wants plain text communication
+                    response_msg = "HANDSHAKE_ACK|PLAIN_MODE"
+                    self.logger.info(f"Plain text mode for client {client_id}")
                     conn.sendall(response_msg.encode())
                     return True
             
@@ -517,6 +582,109 @@ class EnhancedTCPServer(threading.Thread):
             
         except Exception as e:
             self.logger.error(f"Key exchange failed with client {client_id}: {e}")
+            return False
+    
+    def perform_dh_key_exchange(self, conn, client_id):
+        """Perform Diffie-Hellman key exchange"""
+        try:
+            # Get DH parameters
+            dh_params = self.client_manager.encryption_manager.get_dh_parameters_bytes()
+            if not dh_params:
+                self.logger.error("Failed to get DH parameters")
+                conn.sendall("HANDSHAKE_ACK|ENCRYPTION_FAILED".encode())
+                return False
+            
+            # Send DH parameters to client
+            params_b64 = base64.b64encode(dh_params).decode()
+            conn.sendall(f"DH_PARAMS|{params_b64}".encode())
+            
+            # Wait for client's public key
+            client_response = conn.recv(4096).decode()  # Larger buffer for key data
+            
+            if not client_response.startswith("DH_PUBKEY|"):
+                self.logger.error(f"Invalid DH response from client {client_id}")
+                conn.sendall("HANDSHAKE_ACK|ENCRYPTION_FAILED".encode())
+                return False
+            
+            # Extract client's public key
+            client_pubkey_b64 = client_response.split("|")[1]
+            client_pubkey = base64.b64decode(client_pubkey_b64)
+            
+            # Generate server's key pair and compute shared secret
+            server_pubkey = self.client_manager.encryption_manager.get_public_key_bytes(client_id)
+            if not server_pubkey:
+                self.logger.error("Failed to generate server key pair")
+                conn.sendall("HANDSHAKE_ACK|ENCRYPTION_FAILED".encode())
+                return False
+            
+            # Compute shared key
+            if not self.client_manager.encryption_manager.compute_shared_key(client_id, client_pubkey):
+                self.logger.error("Failed to compute shared key")
+                conn.sendall("HANDSHAKE_ACK|ENCRYPTION_FAILED".encode())
+                return False
+            
+            # Send server's public key to client
+            server_pubkey_b64 = base64.b64encode(server_pubkey).decode()
+            conn.sendall(f"DH_SERVER_PUBKEY|{server_pubkey_b64}".encode())
+            
+            # Wait for client acknowledgment
+            client_ack = conn.recv(1024).decode()
+            if client_ack != "DH_ACK|SUCCESS":
+                self.logger.error(f"Client failed to compute shared key: {client_ack}")
+                conn.sendall("HANDSHAKE_ACK|ENCRYPTION_FAILED".encode())
+                return False
+            
+            # Update client info
+            if self.client_manager:
+                with self.client_manager.lock:
+                    if client_id in self.client_manager.tcp_clients:
+                        self.client_manager.tcp_clients[client_id]['encrypted'] = True
+            
+            # Send final acknowledgment
+            conn.sendall("HANDSHAKE_ACK|ENCRYPTION_ENABLED".encode())
+            self.logger.info(f"Secure DH encryption enabled for client {client_id}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"DH key exchange failed with client {client_id}: {e}")
+            conn.sendall("HANDSHAKE_ACK|ENCRYPTION_FAILED".encode())
+            return False
+    
+    def perform_legacy_key_exchange(self, conn, client_id, server_password, parts):
+        """Perform legacy password-based key exchange"""
+        try:
+            # Client wants encryption and provided password
+            client_password = parts[3] if len(parts) >= 4 else ""
+
+            if client_password != server_password:
+                print("[WARNING] Client password should be same as server password.")
+                self.logger.warning('Client password does not match.')
+                conn.sendall("HANDSHAKE_ACK|ENCRYPTION_FAILED".encode())
+                return False
+            
+            # Register the encryption key
+            success = self.client_manager.encryption_manager.add_client_key(client_id, client_password)
+            
+            if success:
+                # Update client info
+                if self.client_manager:
+                    with self.client_manager.lock:
+                        if client_id in self.client_manager.tcp_clients:
+                            self.client_manager.tcp_clients[client_id]['encrypted'] = True
+                
+                response_msg = "HANDSHAKE_ACK|ENCRYPTION_ENABLED"
+                self.logger.info(f"Legacy encryption enabled for client {client_id}")
+            else:
+                response_msg = "HANDSHAKE_ACK|ENCRYPTION_FAILED"
+                self.logger.error(f"Failed to enable encryption for client {client_id}")
+            
+            # Send acknowledgment
+            conn.sendall(response_msg.encode())
+            return success
+            
+        except Exception as e:
+            self.logger.error(f"Legacy key exchange failed with client {client_id}: {e}")
+            conn.sendall("HANDSHAKE_ACK|ENCRYPTION_FAILED".encode())
             return False
 
     def shutdown(self):

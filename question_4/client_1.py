@@ -7,21 +7,30 @@ import secrets
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives.asymmetric import dh
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat, load_der_public_key, ParameterFormat
+from cryptography.hazmat.primitives.serialization import load_der_parameters, load_der_private_key
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 import json
 import getpass
 
 class EncryptionManager:
-    """Handle message encryption and decryption"""
+    """Handle message encryption and decryption with support for Diffie-Hellman key exchange"""
     
     def __init__(self, password=None):
         self.fernet = None
         self.enabled = False
-        self.password = password
-        if password:
+        self.password = password  # Only used for legacy V1 protocol
+        self.dh_private_key = None
+        self.dh_parameters = None
+        self.shared_key = None
+        self.protocol_version = "V2"  # Default to modern protocol
+        
+        if password and self.protocol_version == "V1":
             self.setup_encryption(password)
     
     def setup_encryption(self, password):
-        """Set up encryption using password-based key derivation"""
+        """Set up encryption using password-based key derivation (legacy mode)"""
         try:
             # Generate a random salt for this session
             self.salt = secrets.token_bytes(16)
@@ -34,17 +43,71 @@ class EncryptionManager:
                 iterations=100000,
             )
             key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
-            print('-------------------')
-            print(key)
+            
             # Create Fernet cipher
             self.fernet = Fernet(key)
-            print('-------------------')
-            print(self.fernet)
             self.enabled = True
-            print("[ENCRYPTION] Encryption enabled")
+            print("[ENCRYPTION] Legacy encryption enabled")
             return True
         except Exception as e:
             print(f"[ENCRYPTION] Failed to setup encryption: {e}")
+            return False
+    
+    def setup_dh_encryption(self, dh_params_bytes):
+        """Set up encryption using Diffie-Hellman key exchange"""
+        try:
+            # Load DH parameters
+            self.dh_parameters = load_der_parameters(dh_params_bytes)
+            
+            # Generate private key
+            self.dh_private_key = self.dh_parameters.generate_private_key()
+            print("[ENCRYPTION] DH key pair generated")
+            return True
+        except Exception as e:
+            print(f"[ENCRYPTION] Failed to setup DH encryption: {e}")
+            return False
+    
+    def get_public_key_bytes(self):
+        """Get client's public key as bytes"""
+        if not self.dh_private_key:
+            print("[ENCRYPTION] No DH private key available")
+            return None
+            
+        try:
+            public_key = self.dh_private_key.public_key()
+            return public_key.public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
+        except Exception as e:
+            print(f"[ENCRYPTION] Failed to get public key bytes: {e}")
+            return None
+    
+    def compute_shared_key(self, server_public_key_bytes):
+        """Compute shared key using server's public key"""
+        try:
+            if not self.dh_private_key:
+                print("[ENCRYPTION] No DH private key available")
+                return False
+                
+            # Load server's public key
+            server_public_key = load_der_public_key(server_public_key_bytes)
+            
+            # Compute shared key
+            shared_key = self.dh_private_key.exchange(server_public_key)
+            
+            # Derive encryption key using HKDF
+            derived_key = HKDF(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=None,
+                info=b'handshake data',
+            ).derive(shared_key)
+            
+            # Create Fernet cipher with derived key
+            self.fernet = Fernet(base64.urlsafe_b64encode(derived_key))
+            self.enabled = True
+            print("[ENCRYPTION] Secure DH encryption enabled")
+            return True
+        except Exception as e:
+            print(f"[ENCRYPTION] Failed to compute shared key: {e}")
             return False
     
     def encrypt_message(self, message):
@@ -55,9 +118,16 @@ class EncryptionManager:
         try:
             encrypted = self.fernet.encrypt(message.encode())
             # Include salt with encrypted message for decryption
+            # For DH mode, we don't need salt as the key is derived from the shared secret
+            if hasattr(self, 'salt'):
+                salt_b64 = base64.urlsafe_b64encode(self.salt).decode()
+            else:
+                # For DH mode, use a dummy salt as it's not actually used for decryption
+                salt_b64 = base64.urlsafe_b64encode(b'dh_mode_no_salt').decode()
+                
             payload = {
                 'encrypted': base64.urlsafe_b64encode(encrypted).decode(),
-                'salt': base64.urlsafe_b64encode(self.salt).decode(),
+                'salt': salt_b64,
                 'encrypted_flag': True
             }
             return json.dumps(payload)
@@ -97,10 +167,12 @@ class ResilientClient:
         self.port = port
         self.protocol = protocol.upper()
         self.sock = None
-        self.encryption_password = encryption_password
+        self.encryption_password = encryption_password  # Only used for legacy V1 protocol
         self.handshake_completed = False
         
         # Initialize encryption manager
+        # For V2 protocol (DH), password is not needed for encryption
+        # For V1 protocol (legacy), password is required for encryption
         self.encryption = EncryptionManager(encryption_password)
         
         # Statistics
@@ -181,14 +253,33 @@ class ResilientClient:
                 print(f"[CLIENT] Unexpected handshake: {handshake_request}")
                 return False
             
-            print("[CLIENT] Received handshake request from server")
+            # Check protocol version from server
+            handshake_parts = handshake_request.split("|")
+            server_protocol = handshake_parts[2] if len(handshake_parts) >= 3 else "V1"
             
-            # Send handshake response
-            if self.encryption.enabled:
-                response = f"HANDSHAKE_RESPONSE|ENCRYPTED|{self.encryption_password}"
-                print("[CLIENT] Requesting encrypted communication")
+            print(f"[CLIENT] Received handshake request from server (protocol: {server_protocol})")
+            
+            # Determine which protocol to use (use the lower version for compatibility)
+            if server_protocol == "V2" and self.encryption.protocol_version == "V2":
+                # Both support V2, use modern DH key exchange
+                return self.perform_dh_handshake()
             else:
-                response = "HANDSHAKE_RESPONSE|PLAIN|"
+                # Fall back to legacy password-based exchange
+                return self.perform_legacy_handshake()
+            
+        except Exception as e:
+            print(f"[CLIENT] Handshake failed: {e}")
+            return False
+    
+    def perform_legacy_handshake(self):
+        """Perform legacy password-based handshake"""
+        try:
+            # Send handshake response with legacy protocol
+            if self.encryption.enabled:
+                response = f"HANDSHAKE_RESPONSE|ENCRYPTED|V1|{self.encryption_password}"
+                print("[CLIENT] Requesting legacy encrypted communication")
+            else:
+                response = "HANDSHAKE_RESPONSE|PLAIN|V1|"
                 print("[CLIENT] Requesting plain text communication")
             
             self.sock.sendall(response.encode())
@@ -217,7 +308,76 @@ class ResilientClient:
             return False
             
         except Exception as e:
-            print(f"[CLIENT] Handshake failed: {e}")
+            print(f"[CLIENT] Legacy handshake failed: {e}")
+            return False
+    
+    def perform_dh_handshake(self):
+        """Perform Diffie-Hellman key exchange handshake"""
+        try:
+            # Send handshake response with V2 protocol
+            response = "HANDSHAKE_RESPONSE|ENCRYPTED|V2|"
+            print("[CLIENT] Requesting secure DH encrypted communication")
+            self.sock.sendall(response.encode())
+            
+            # Wait for DH parameters from server
+            dh_params_response = self.sock.recv(4096).decode()  # Larger buffer for key data
+            
+            if not dh_params_response.startswith("DH_PARAMS|"):
+                print(f"[CLIENT] Unexpected DH response: {dh_params_response}")
+                return False
+            
+            # Extract DH parameters
+            dh_params_b64 = dh_params_response.split("|")[1]
+            dh_params_bytes = base64.b64decode(dh_params_b64)
+            
+            # Setup DH encryption
+            if not self.encryption.setup_dh_encryption(dh_params_bytes):
+                print("[CLIENT] Failed to setup DH encryption")
+                return False
+            
+            # Get client's public key
+            client_pubkey = self.encryption.get_public_key_bytes()
+            if not client_pubkey:
+                print("[CLIENT] Failed to get client public key")
+                return False
+            
+            # Send client's public key to server
+            client_pubkey_b64 = base64.b64encode(client_pubkey).decode()
+            self.sock.sendall(f"DH_PUBKEY|{client_pubkey_b64}".encode())
+            
+            # Wait for server's public key
+            server_pubkey_response = self.sock.recv(4096).decode()
+            
+            if not server_pubkey_response.startswith("DH_SERVER_PUBKEY|"):
+                print(f"[CLIENT] Unexpected server pubkey response: {server_pubkey_response}")
+                return False
+            
+            # Extract server's public key
+            server_pubkey_b64 = server_pubkey_response.split("|")[1]
+            server_pubkey = base64.b64decode(server_pubkey_b64)
+            
+            # Compute shared key
+            if not self.encryption.compute_shared_key(server_pubkey):
+                print("[CLIENT] Failed to compute shared key")
+                self.sock.sendall("DH_ACK|FAILED".encode())
+                return False
+            
+            # Send acknowledgment
+            self.sock.sendall("DH_ACK|SUCCESS".encode())
+            
+            # Wait for final server acknowledgment
+            final_ack = self.sock.recv(1024).decode()
+            
+            if final_ack == "HANDSHAKE_ACK|ENCRYPTION_ENABLED":
+                print("[CLIENT] ✓ Server confirmed secure DH encryption enabled")
+                self.handshake_completed = True
+                return True
+            else:
+                print(f"[CLIENT] Unexpected final ack: {final_ack}")
+                return False
+            
+        except Exception as e:
+            print(f"[CLIENT] DH handshake failed: {e}")
             return False
 
     def prepare_message(self, msg: str):
@@ -435,7 +595,7 @@ def main():
         else:
             print("🔓 Encryption: DISABLED")
         
-        # Get message to send
+        # Get message to sedn
         message = input("\n[CLIENT] Enter message: ")
         if message.strip():
             success = client.send_message(message)
