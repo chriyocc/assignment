@@ -345,12 +345,6 @@ class ClientManager:
                 'encrypted': False  # Will be updated during handshake process
             }
             
-            # Register encryption key if provided (only for legacy V1 protocol)
-            if encryption_password:
-                self.encryption_manager.add_client_key(client_id, encryption_password)
-                self.logger.info(f"TCP client {client_id} connected with legacy encryption from {addr}")
-            else:
-                self.logger.info(f"TCP client {client_id} connected (plain) from {addr}")
     
     def remove_tcp_client(self, client_id):
         """Remove a TCP client and cleanup encryption keys"""
@@ -560,16 +554,11 @@ class EnhancedTCPServer(threading.Thread):
             if response.startswith("HANDSHAKE_RESPONSE|"):
                 parts = response.split("|")
                 encryption_mode = parts[1] if len(parts) >= 2 else "PLAIN"  # ENCRYPTED or PLAIN
-                protocol_version = parts[2] if len(parts) >= 3 else "V1"    # V1 or V2
+                protocol_version = parts[2]
                 
                 if encryption_mode == "ENCRYPTED":
-                    # Handle based on protocol version
-                    if protocol_version == "V2":
-                        # Modern DH key exchange (no password needed)
-                        return self.perform_dh_key_exchange(conn, client_id)
-                    else:
-                        # Legacy password-based exchange
-                        return self.perform_legacy_key_exchange(conn, client_id, server_password, parts)
+                    # Modern DH key exchange
+                    return self.perform_dh_key_exchange(conn, client_id)
                 else:
                     # Client wants plain text communication
                     response_msg = "HANDSHAKE_ACK|PLAIN_MODE"
@@ -649,43 +638,6 @@ class EnhancedTCPServer(threading.Thread):
             self.logger.error(f"DH key exchange failed with client {client_id}: {e}")
             conn.sendall("HANDSHAKE_ACK|ENCRYPTION_FAILED".encode())
             return False
-    
-    def perform_legacy_key_exchange(self, conn, client_id, server_password, parts):
-        """Perform legacy password-based key exchange"""
-        try:
-            # Client wants encryption and provided password
-            client_password = parts[3] if len(parts) >= 4 else ""
-
-            if client_password != server_password:
-                print("[WARNING] Client password should be same as server password.")
-                self.logger.warning('Client password does not match.')
-                conn.sendall("HANDSHAKE_ACK|ENCRYPTION_FAILED".encode())
-                return False
-            
-            # Register the encryption key
-            success = self.client_manager.encryption_manager.add_client_key(client_id, client_password)
-            
-            if success:
-                # Update client info
-                if self.client_manager:
-                    with self.client_manager.lock:
-                        if client_id in self.client_manager.tcp_clients:
-                            self.client_manager.tcp_clients[client_id]['encrypted'] = True
-                
-                response_msg = "HANDSHAKE_ACK|ENCRYPTION_ENABLED"
-                self.logger.info(f"Legacy encryption enabled for client {client_id}")
-            else:
-                response_msg = "HANDSHAKE_ACK|ENCRYPTION_FAILED"
-                self.logger.error(f"Failed to enable encryption for client {client_id}")
-            
-            # Send acknowledgment
-            conn.sendall(response_msg.encode())
-            return success
-            
-        except Exception as e:
-            self.logger.error(f"Legacy key exchange failed with client {client_id}: {e}")
-            conn.sendall("HANDSHAKE_ACK|ENCRYPTION_FAILED".encode())
-            return False
 
     def shutdown(self):
         """Shutdown the server"""
@@ -694,29 +646,70 @@ class EnhancedTCPServer(threading.Thread):
             self.sock.close()
         self.logger.info("Enhanced TCP Server shutdown complete")
 
+class EnhancedUDPServer(threading.Thread):
+    def __init__(self, hostname="localhost", port=8080, message_processor=None):
+        super().__init__(daemon=True, name="UDPServer")
+        self.hostname = hostname
+        self.port = port
+        self.message_processor = message_processor
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.running = False
+        self.logger = logging.getLogger('UDPServer')
+
+    def start_server(self):
+        """Start the UDP server"""
+        try:
+            self.sock.bind((self.hostname, self.port))
+            self.running = True
+            self.logger.info(f"UDP Server listening on {self.hostname}:{self.port}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to start UDP server: {e}")
+            return False
+
+    def run(self):
+        """Main server loop"""
+        if not self.start_server():
+            return
+
+        try:
+            while self.running:
+                try:
+                    data, addr = self.sock.recvfrom(4096)  # Buffer size for UDP
+                    self.logger.info(f"Received UDP message from {addr}")
+
+                    # Process the message
+                    if self.message_processor:
+                        response = self.message_processor.create_response(
+                            data.decode(), "PLAIN", False, None, None
+                        )
+                        self.sock.sendto(response.encode(), addr)
+
+                except Exception as e:
+                    self.logger.error(f"Error handling UDP message: {e}")
+
+        finally:
+            self.shutdown()
+
+    def shutdown(self):
+        """Shutdown the server"""
+        self.running = False
+        if self.sock:
+            self.sock.close()
+        self.logger.info("UDP Server shutdown complete")
+
 def get_server_config():
     """Get server configuration including encryption support"""
     print("\n=== ENHANCED SERVER CONFIGURATION ===")
     
-    # Get default encryption password for new clients (optional)
+    # Modern servers use DH key exchange and don't need default passwords
     print("Server Encryption Setup:")
     print("Note: Clients can connect with or without encryption")
-    print("You can optionally set a default server password for encrypted clients")
+    print("DH key exchange will be used for secure connections")
+    print("Waiting server to start...")
     
-    while True:
-        use_default_encryption = input("Set default encryption password? (y/N): ").strip().lower()
-        if use_default_encryption in ['', 'n', 'no']:
-            default_password = None
-            break
-        elif use_default_encryption in ['y', 'yes']:
-            default_password = getpass.getpass("Enter default server encryption password: ")
-            if default_password:
-                print("Default encryption password set (clients must use the same password)")
-                break
-            else:
-                print("Password cannot be empty")
-        else:
-            print("Please enter y/yes or n/no")
+    # No default password in modern setup
+    default_password = None
     
     return default_password
 
@@ -724,40 +717,35 @@ def main():
     """Enhanced main function with encryption support"""
     logger = setup_logging()
     logger.info("=== Enhanced Resilient Server Starting ===")
-    
-    # Get server configuration
-    default_password = get_server_config()
-    
+
+    # Get server configuration - no default password needed for modern DH exchange
+    get_server_config()
+
     # Create components
     encryption_manager = EncryptionManager()
     message_processor = MessageProcessor()
     client_manager = ClientManager(encryption_manager)
-    
-    # Set default encryption password if provided
-    if default_password:
-        # This is a simplified approach - in production you'd want better key management
-        logger.info("Default encryption password configured")
-    
-    # Create server
-    tcp_server = EnhancedTCPServer(port=8080, client_manager=client_manager, message_processor=message_processor, server_password=default_password)
-    
+
+    # Use the same port for both TCP and UDP
+    port = 8080
+    tcp_server = EnhancedTCPServer(port=port, client_manager=client_manager, message_processor=message_processor)
+    udp_server = EnhancedUDPServer(port=port, message_processor=message_processor)
+
     try:
         tcp_server.start()
-        
+        udp_server.start()  # Start UDP server
+
         logger.info("Enhanced server started successfully")
-        logger.info("TCP Server: localhost:8080")
-        if default_password:
-            logger.info("🔒 Encryption: ENABLED (with default password)")
-        else:
-            logger.info("🔓 Encryption: OPTIONAL (no default password)")
+        logger.info(f"TCP and UDP Server: localhost:{port}")
+        logger.info("🔒 Encryption: Modern DH key exchange enabled")
         logger.info("Server supports both encrypted and plain text clients")
         logger.info("Press Ctrl+C to shutdown")
-        
+
         # Keep main thread alive and show periodic stats
         last_stats_time = time.time()
         while True:
             time.sleep(5)
-            
+
             # Show stats every minute
             if time.time() - last_stats_time >= 60:
                 stats = message_processor.message_stats
@@ -766,12 +754,13 @@ def main():
                           f"Plain: {stats['plain_messages']}, "
                           f"Errors: {stats['decryption_errors']}")
                 last_stats_time = time.time()
-            
+
     except KeyboardInterrupt:
         logger.info("\nShutdown requested...")
     finally:
         logger.info("Shutting down server...")
         tcp_server.shutdown()
+        udp_server.shutdown()  # Shutdown UDP server
         time.sleep(2)
         logger.info("=== Enhanced Server Shutdown Complete ===")
 
