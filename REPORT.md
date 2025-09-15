@@ -1,6 +1,33 @@
 # 1.0 Introduction
 
+Network programming is a critical component of modern distributed systems, allowing applications to communicate over a network on different machines. This assignment addresses core elements of network sockets through hands-on practice using Python. Emphasis will be placed on client-server architecture, security vulnerabilities, and fault-tolerant implementations of communication networks.
+
+The most important objective is to assure the understanding of network programming concepts through actual implementation mechanisms such as client-server communication, and the implementation of fault-tolerant networking solutions. By working with both TCP and UDP protocols, we aim to gain experience in the strengths and weaknesses of both reliability and performance in network communication.
+
+### Objectives
+
+- Understand network socket programming concepts and implementation
+- Analyze network security vulnerabilities through packet inspection
+- Implement fault-tolerant client-server communication systems
+- Develop scalable and secure network applications
+
+
+
 # 2.0 Implementation
+
+### Development Environment
+
+- **Operating System:** MacOS 15.4
+- **Programming Language:** Python
+- **Tools Used:** netcat, Wireshark, Python library, Visual Code Studio, GitHub
+
+
+
+### Source Code
+
+https://github.com/chriyocc/assignment
+
+![QR Code](/Users/yoyojun/Library/Mobile Documents/com~apple~CloudDocs/My UNI/Y2S1/Electronics III/QR Code.png)
 
 # 3.0 Results
 
@@ -747,7 +774,11 @@ This resilient client-server system well demonstrates how network faults impact 
 
 This system is a robust network server implementation that supports multiple concurrent clients through both TCP and UDP protocols. It features advanced security mechanisms, comprehensive fault tolerance, detailed logging, and scalable designed to handle real-world deployment scenarios.
 
+(As the source code is too long, only the most relevant sections are shown in this report. Full source code is available at below link.)
+
 **Source code:** https://github.com/chriyocc/assignment
+
+
 
 ### 3.4.2 Features
 
@@ -783,6 +814,86 @@ EncryptionManager class handles all the cryptographic operations including Diffi
 - HKDF (HMAC-based Key Derivation Function) for key derivation
 - Unique keys per client session
 
+**Code:**
+
+```python
+...
+def decrypt_message(self, encrypted_data, client_id):
+      """Decrypt a message using the client's key"""
+      try:
+          # Parse the encrypted payload
+          payload = json.loads(encrypted_data)
+
+          if not payload.get('encrypted_flag', False):
+              return encrypted_data  # Not encrypted
+
+          # Get client's password or DH-derived key (in production, this would be more secure)
+          password = self.encryption_keys.get(client_id)
+          if not password:
+              self.logger.warning(f"No encryption key found for client {client_id}")
+              return "[DECRYPTION_ERROR: No key available]"
+
+          # Extract salt and encrypted data
+          salt = base64.urlsafe_b64decode(payload['salt'].encode())
+          encrypted_bytes = base64.urlsafe_b64decode(payload['encrypted'].encode())
+
+          # Check if this is a DH-derived key (already in bytes format)
+          if isinstance(password, bytes):
+              # DH mode - use the key directly
+              fernet = Fernet(password)
+          else:
+              # Legacy mode - derive key from password and salt
+              fernet = self.create_fernet_from_password_and_salt(password, salt)
+
+          if not fernet:
+              return "[DECRYPTION_ERROR: Failed to create cipher]"
+
+          decrypted = fernet.decrypt(encrypted_bytes)
+          decrypted_text = decrypted.decode()
+
+          self.logger.debug(f"Successfully decrypted message for client {client_id}")
+          return decrypted_text
+
+      except json.JSONDecodeError:
+          # Not a JSON encrypted message, return as-is
+          return encrypted_data
+      except Exception as e:
+          self.logger.error(f"Decryption failed for client {client_id}: {e}")
+          return f"[DECRYPTION_ERROR: {str(e)}]"
+        
+def encrypt_message(self, message, client_id):
+      """Encrypt a message for sending back to client"""
+      try:
+          password = self.encryption_keys.get(client_id)
+          if not password:
+              return message  # No encryption key, send plain
+
+          # Generate new salt for response
+          salt = os.urandom(16)
+
+          # Create cipher and encrypt
+          fernet = self.create_fernet_from_password_and_salt(password, salt)
+          if not fernet:
+              return message
+
+          encrypted = fernet.encrypt(message.encode())
+
+          # Create payload
+          payload = {
+              'encrypted': base64.urlsafe_b64encode(encrypted).decode(),
+              'salt': base64.urlsafe_b64encode(salt).decode(),
+              'encrypted_flag': True
+          }
+
+          return json.dumps(payload)
+
+      except Exception as e:
+          self.logger.error(f"Encryption failed for client {client_id}: {e}")
+          return message
+```
+
+
+
 #### 2. MessageProcessor
 
 The MessageProcessor class handles the incoming messages, validates integrity and generates responses.
@@ -792,6 +903,38 @@ The MessageProcessor class handles the incoming messages, validates integrity an
 - `parse_message()`: Parses and validates incoming message format
 - `create_response()`: Generates echo responses
 - `checksum()`: SHA256-based message integrity verification
+
+**Code:**
+
+```python
+def checksum(self, msg: str) -> str:
+      """Calculate SHA256 checksum"""
+      return hashlib.sha256(msg.encode()).hexdigest()[:16]
+    
+def create_response(self, original_message, message_type, is_encrypted, client_id, encryption_manager):
+      """Create appropriate response message"""
+      try:
+          # For demo purposes, echo back with a prefix
+          response_message = f"ECHO: {original_message}"
+
+          if is_encrypted:
+              # Encrypt the response
+              encrypted_response = encryption_manager.encrypt_message(response_message, client_id)
+              checksum = self.checksum(encrypted_response)
+              return f"{encrypted_response}|{checksum}|ENCRYPTED"
+          else:
+              # Plain response
+              checksum = self.checksum(response_message)
+              return f"{response_message}|{checksum}|PLAIN"
+
+      except Exception as e:
+          self.logger.error(f"Error creating response for {client_id}: {e}")
+          error_msg = "Server error processing message"
+          checksum = self.checksum(error_msg)
+          return f"{error_msg}|{checksum}|PLAIN"
+```
+
+
 
 #### 3. ClientManager
 
@@ -803,6 +946,26 @@ The ClientManager handles the client connections and states.
 - `update_tcp_stats()`: Updates per-client statistics
 - `remove_tcp_client()`: Cleanup on client disconnection
 
+**Code:**
+
+```python
+ def add_tcp_client(self, client_id, conn, addr, encryption_password=None):
+      """Add a new TCP client with optional encryption"""
+      with self.lock:
+          self.tcp_clients[client_id] = {
+              'connection': conn,
+              'address': addr,
+              'connected_at': datetime.now(),
+              'messages_sent': 0,
+              'messages_received': 0,
+              'bytes_sent': 0,
+              'bytes_received': 0,
+              'encrypted': False  # Will be updated during handshake process
+          }
+```
+
+
+
 #### 4. EnhancedTCPServer
 
 The main TCP server that handle multiple client connections.
@@ -813,9 +976,78 @@ The main TCP server that handle multiple client connections.
 - `perform_dh_key_exchange()`: Secure handshake implementation
 - `start_server()`: Server initialization and binding
 
+**Code:**
+
+```python
+def run(self):
+      """Main server loop"""
+      if not self.start_server():
+          return
+
+      try:
+          while self.running:
+              try:
+                  self.sock.settimeout(1.0)
+                  conn, addr = self.sock.accept()
+
+                  self.client_counter += 1
+                  client_id = f"tcp_client_{self.client_counter}"
+
+                  # Add client to manager (no encryption password by default)
+                  if self.client_manager:
+                      self.client_manager.add_tcp_client(client_id, conn, addr)
+
+                  # Handle client in separate thread
+                  client_thread = threading.Thread(
+                      target=self.handle_client,
+                      args=(conn, addr, client_id, self.server_password),
+                      daemon=True,
+                      name=f"TCPClient-{client_id}"
+                  )
+                  client_thread.start()
+
+              except socket.timeout:
+                  continue
+              except Exception as e:
+                  if self.running:
+                      self.logger.error(f"Error accepting connection: {e}")
+```
+
+
+
 #### 5. EnhancedUDPServer
 
 Handle UDP message connectionless. Parallel operation with TCP server.
+
+**Code:**
+
+```python
+def run(self):
+      """Main server loop"""
+      if not self.start_server():
+          return
+
+      try:
+          while self.running:
+              try:
+                  data, addr = self.sock.recvfrom(4096)  # Buffer size for UDP
+                  self.logger.info(f"Received UDP message from {addr}")
+
+                  # Process the message
+                  if self.message_processor:
+                      response = self.message_processor.create_response(
+                          data.decode(), "PLAIN", False, None, None
+                      )
+                      self.sock.sendto(response.encode(), addr)
+
+              except Exception as e:
+                  self.logger.error(f"Error handling UDP message: {e}")
+
+      finally:
+          self.shutdown()
+```
+
+
 
 ### 3.4.4 Secuirity Features
 
@@ -870,7 +1102,7 @@ python server.py
 
 
 
-### Start Client
+#### Start Client (Accept multiple client)
 
 ```bash
 python client_1.py
@@ -888,7 +1120,9 @@ python client_2.py
 
 
 
-#### Example Terminal Session
+#### No fault Situation
+
+**Example Terminal Session**
 
 `server.py`
 
@@ -938,7 +1172,7 @@ Server host [localhost]:
 Server port [8080]: 
 [CLIENT] Connected to localhost:8080 via TCP
 [CLIENT] Waiting for handshake request...
-[CLIENT] Received handshake request from server (protocol: V2)
+[CLIENT] Received handshake request from server
 [CLIENT] Requesting secure DH encrypted communication
 [ENCRYPTION] DH key pair generated
 [ENCRYPTION] Secure DH encryption enabled
@@ -1004,4 +1238,115 @@ Shutdown requested...
 2025-09-14 21:55:15,593 - root - INFO - === Enhanced Server Shutdown Complete ===
 
 ```
+
+
+
+**Packet Analysis**
+
+```bash
+0000   02 00 00 00 45 00 01 3c 00 00 40 00 40 06 00 00   ....E..<..@.@...
+0010   7f 00 00 01 7f 00 00 01 1f 90 e5 09 1c d1 49 8c   ..............I.
+0020   b5 eb 60 a3 80 18 18 dd ff 30 00 00 01 01 08 0a   ..`......0......
+0030   65 ce 46 9d b6 3e 8d 94 7b 22 65 6e 63 72 79 70   e.F..>..{"encryp
+0040   74 65 64 22 3a 20 22 5a 30 46 42 51 55 46 42 51   ted": "Z0FBQUFBQ
+0050   6d 39 34 4e 46 39 45 64 54 4e 42 64 56 4e 33 63   m94NF9EdTNBdVN3c
+0060   6b 46 56 52 32 4a 54 59 6a 6c 72 54 7a 42 58 4e   kFVR2JTYjlrTzBXN
+0070   57 68 33 52 6b 78 70 62 46 4e 36 4e 56 6c 7a 57   Wh3RkxpbFN6NVlzW
+0080   45 52 54 51 58 46 52 53 45 46 71 61 45 39 53 65   ERTQXFRSEFqaE9Se
+0090   6b 77 7a 51 31 6f 7a 53 54 5a 36 4d 6e 55 35 4d   kwzQ1ozSTZ6MnU5M
+00a0   32 39 6c 59 56 46 59 63 57 64 35 5a 32 52 32 56   29lYVFYcWd5Z2R2V
+00b0   55 52 54 61 32 5a 6b 5a 7a 68 76 62 6c 5a 71 62   URTa2ZkZzhvblZqb
+00c0   7a 46 55 56 47 35 52 56 33 70 48 56 32 70 57 5a   zFUVG5RV3pHV2pWZ
+00d0   57 6c 4a 4e 54 4a 61 62 57 56 6e 51 6a 68 30 59   WlJNTJabWVnQjh0Y
+00e0   6b 4a 77 4d 54 67 39 22 2c 20 22 73 61 6c 74 22   kJwMTg9", "salt"
+00f0   3a 20 22 78 32 5a 49 4a 33 68 77 54 76 49 67 31   : "x2ZIJ3hwTvIg1
+0100   43 63 4f 51 6e 4a 70 64 67 3d 3d 22 2c 20 22 65   CcOQnJpdg==", "e
+0110   6e 63 72 79 70 74 65 64 5f 66 6c 61 67 22 3a 20   ncrypted_flag": 
+0120   74 72 75 65 7d 7c 65 66 33 31 65 35 38 62 63 35   true}|ef31e58bc5
+0130   65 63 66 63 35 61 7c 45 4e 43 52 59 50 54 45 44   ecfc5a|ENCRYPTED
+
+```
+
+Message is encrypted.
+
+
+
+#### Fault Situation
+
+**Example Terminal Session**
+
+`client.py`
+
+```bash
+=== SIMPLE CLIENT CONFIGURATION ===
+Choose protocol (TCP/UDP) [TCP]: 
+Server host [localhost]: 
+Server port [8080]: 
+[CLIENT] Connected to localhost:8080 via TCP
+[CLIENT] Waiting for handshake request...
+[CLIENT] Received handshake request from server.
+[CLIENT] Requesting secure DH encrypted communication
+[ENCRYPTION] DH key pair generated
+[ENCRYPTION] Secure DH encryption enabled
+[CLIENT] ✓ Server confirmed secure DH encryption enabled
+
+=== CONNECTED TO localhost:8080 VIA TCP ===
+🔒 Encryption: ENABLED
+
+[CLIENT] Enter message: Hello From Client
+[CLIENT] Encrypting message...
+[CLIENT] Prepared payload (length: 260 chars)
+[CLIENT] Attempt 1/3
+[CLIENT] Raw response received (length: 10 chars)
+[CLIENT] Invalid response format
+[CLIENT] Invalid response received
+[CLIENT] Attempt 2/3
+[CLIENT] Raw response received (length: 264 chars)
+[CLIENT] Checksum - Current: bc3d93ec..., Received: 15532f9a...
+[CLIENT] Checksum mismatch (possible corruption)
+[CLIENT] Invalid response received
+[CLIENT] Attempt 3/3
+[CLIENT] Raw response received (length: 264 chars)
+[CLIENT] Checksum - Current: f9307121..., Received: 2be198cd...
+[CLIENT] Checksum mismatch (possible corruption)
+[CLIENT] Invalid response received
+[CLIENT] ✗ Failed to send message after 3 attempts
+[CLIENT] ✗ Failed to send message
+
+=== CLIENT STATISTICS ===
+Messages Sent: 3
+Messages Received: 0
+Timeouts: 0
+Checksum Mismatches: 2
+Connection Resets: 0
+========================
+[CLIENT] Connection closed
+[CLIENT] Goodbye!
+```
+
+
+
+### 3.4.6 Analysis
+
+This implementation successfully demonstrates network programming concepts while incorporating security practices and addresses the shortcoming in section 3.3. The combination of robust concurrency handling, cryptographic implementation, and comprehensive operational monitoring form a foundation for production deployment.
+
+
+
+## 4.0 Discussion
+
+### 4.1 Protocol Comparison Analysis
+
+#### **TCP:**
+
+- Reliable connection
+- Guaranteed delivery
+- Additional latency
+
+#### UDP:
+
+- Simplified implementation
+- No guarantee of message delivery
+- Lower latency
+
+
 

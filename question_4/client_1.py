@@ -247,11 +247,7 @@ class ResilientClient:
                 print(f"[CLIENT] Unexpected handshake: {handshake_request}")
                 return False
             
-            # Check protocol version from server
-            handshake_parts = handshake_request.split("|")
-            server_protocol = handshake_parts[2]
-            
-            print(f"[CLIENT] Received handshake request from server (protocol: {server_protocol})")
+            print(f"[CLIENT] Received handshake request from server.")
             
             return self.perform_dh_handshake()
             

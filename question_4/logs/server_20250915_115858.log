@@ -1,0 +1,51 @@
+2025-09-15 11:58:58,718 - root - INFO - === Enhanced Resilient Server Starting ===
+2025-09-15 11:59:25,469 - EncryptionManager - INFO - DH parameters initialized successfully
+2025-09-15 11:59:25,471 - root - INFO - Enhanced server started successfully
+2025-09-15 11:59:25,471 - root - INFO - TCP and UDP Server: localhost:8080
+2025-09-15 11:59:25,471 - root - INFO - 🔒 Encryption: Modern DH key exchange enabled
+2025-09-15 11:59:25,471 - root - INFO - Server supports both encrypted and plain text clients
+2025-09-15 11:59:25,471 - root - INFO - Press Ctrl+C to shutdown
+2025-09-15 11:59:25,476 - UDPServer - INFO - UDP Server listening on localhost:8080
+2025-09-15 11:59:25,476 - TCPServer - INFO - Enhanced TCP Server listening on localhost:8080
+2025-09-15 11:59:27,522 - TCPServer - INFO - Handling client tcp_client_1 from ('127.0.0.1', 58545)
+2025-09-15 11:59:27,522 - TCPServer - DEBUG - Sent handshake request to tcp_client_1
+2025-09-15 11:59:27,552 - EncryptionManager - INFO - Shared key computed for client tcp_client_1
+2025-09-15 11:59:27,560 - TCPServer - INFO - Secure DH encryption enabled for client tcp_client_1
+2025-09-15 11:59:31,171 - MessageProcessor - INFO - Received encrypted message from client tcp_client_1
+2025-09-15 11:59:31,173 - EncryptionManager - DEBUG - Successfully decrypted message for client tcp_client_1
+2025-09-15 11:59:31,173 - MessageProcessor - INFO - Decrypted message from tcp_client_1: Hey...
+2025-09-15 11:59:31,173 - FaultSimulator - WARNING - [TCP] Simulating data corruption for client tcp_client_1
+2025-09-15 11:59:31,174 - TCPServer - DEBUG - [tcp_client_1] Sent response (240 bytes)
+2025-09-15 11:59:31,174 - MessageProcessor - INFO - Received encrypted message from client tcp_client_1
+2025-09-15 11:59:31,174 - EncryptionManager - DEBUG - Successfully decrypted message for client tcp_client_1
+2025-09-15 11:59:31,174 - MessageProcessor - INFO - Decrypted message from tcp_client_1: Hey...
+2025-09-15 11:59:31,174 - FaultSimulator - WARNING - [TCP] Simulating data corruption for client tcp_client_1
+2025-09-15 11:59:31,174 - TCPServer - DEBUG - [tcp_client_1] Sent response (240 bytes)
+2025-09-15 11:59:31,175 - MessageProcessor - INFO - Received encrypted message from client tcp_client_1
+2025-09-15 11:59:31,175 - EncryptionManager - DEBUG - Successfully decrypted message for client tcp_client_1
+2025-09-15 11:59:31,175 - MessageProcessor - INFO - Decrypted message from tcp_client_1: Hey...
+2025-09-15 11:59:31,175 - FaultSimulator - WARNING - [TCP] Simulating packet loss for client tcp_client_1
+2025-09-15 11:59:31,175 - TCPServer - DEBUG - [tcp_client_1] Sent response (10 bytes)
+2025-09-15 11:59:31,175 - TCPServer - INFO - Client tcp_client_1 disconnected.
+2025-09-15 11:59:31,176 - ClientManager - INFO - TCP client tcp_client_1 (encrypted) disconnected. Duration: 0:00:03.654388
+2025-09-15 11:59:31,176 - TCPServer - INFO - Client tcp_client_1 handler terminated
+2025-09-15 11:59:45,152 - TCPServer - INFO - Handling client tcp_client_2 from ('127.0.0.1', 58548)
+2025-09-15 11:59:45,153 - TCPServer - DEBUG - Sent handshake request to tcp_client_2
+2025-09-15 11:59:45,179 - EncryptionManager - INFO - Shared key computed for client tcp_client_2
+2025-09-15 11:59:45,186 - TCPServer - INFO - Secure DH encryption enabled for client tcp_client_2
+2025-09-15 11:59:47,249 - MessageProcessor - INFO - Received encrypted message from client tcp_client_2
+2025-09-15 11:59:47,250 - EncryptionManager - DEBUG - Successfully decrypted message for client tcp_client_2
+2025-09-15 11:59:47,250 - MessageProcessor - INFO - Decrypted message from tcp_client_2: hello...
+2025-09-15 11:59:47,251 - TCPServer - DEBUG - [tcp_client_2] Sent response (240 bytes)
+2025-09-15 11:59:47,251 - TCPServer - INFO - Client tcp_client_2 disconnected.
+2025-09-15 11:59:47,251 - ClientManager - INFO - TCP client tcp_client_2 (encrypted) disconnected. Duration: 0:00:02.100640
+2025-09-15 11:59:47,252 - TCPServer - INFO - Client tcp_client_2 handler terminated
+2025-09-15 12:00:23,223 - root - INFO - 
+Shutdown requested...
+2025-09-15 12:00:23,224 - root - INFO - Shutting down server...
+2025-09-15 12:00:23,225 - TCPServer - INFO - Enhanced TCP Server shutdown complete
+2025-09-15 12:00:23,225 - UDPServer - ERROR - Error handling UDP message: [Errno 9] Bad file descriptor
+2025-09-15 12:00:23,225 - UDPServer - INFO - UDP Server shutdown complete
+2025-09-15 12:00:23,225 - UDPServer - INFO - UDP Server shutdown complete
+2025-09-15 12:00:24,188 - TCPServer - INFO - Enhanced TCP Server shutdown complete
+2025-09-15 12:00:25,230 - root - INFO - === Enhanced Server Shutdown Complete ===

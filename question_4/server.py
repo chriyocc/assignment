@@ -391,7 +391,6 @@ def randomFault(data, protocol, client_id=None):
 
     if r < 0.6:
         logger.warning(f"[{protocol}] Simulating data corruption{client_info}")
-        data_str = data.decode('utf-8', errors='ignore')
         
         # Be careful with corruption to maintain some message structure
         corrupted = bytearray(data)
@@ -543,7 +542,7 @@ class EnhancedTCPServer(threading.Thread):
         """Perform secure key exchange handshake with client using Diffie-Hellman"""
         try:
             # Send handshake request with protocol version
-            handshake_request = "HANDSHAKE_REQUEST|SERVER_READY|V2"
+            handshake_request = "HANDSHAKE_REQUEST|SERVER_READY"
             conn.sendall(handshake_request.encode())
             self.logger.debug(f"Sent handshake request to {client_id}")
             

@@ -1,0 +1,34 @@
+2025-09-15 12:01:23,802 - root - INFO - === Enhanced Resilient Server Starting ===
+2025-09-15 12:01:44,209 - EncryptionManager - INFO - DH parameters initialized successfully
+2025-09-15 12:01:44,210 - root - INFO - Enhanced server started successfully
+2025-09-15 12:01:44,210 - root - INFO - TCP and UDP Server: localhost:8080
+2025-09-15 12:01:44,210 - root - INFO - 🔒 Encryption: Modern DH key exchange enabled
+2025-09-15 12:01:44,210 - root - INFO - Server supports both encrypted and plain text clients
+2025-09-15 12:01:44,210 - root - INFO - Press Ctrl+C to shutdown
+2025-09-15 12:01:44,212 - UDPServer - INFO - UDP Server listening on localhost:8080
+2025-09-15 12:01:44,212 - TCPServer - INFO - Enhanced TCP Server listening on localhost:8080
+2025-09-15 12:02:04,955 - TCPServer - INFO - Handling client tcp_client_1 from ('127.0.0.1', 58633)
+2025-09-15 12:02:04,956 - TCPServer - DEBUG - Sent handshake request to tcp_client_1
+2025-09-15 12:02:04,996 - EncryptionManager - INFO - Shared key computed for client tcp_client_1
+2025-09-15 12:02:05,000 - TCPServer - INFO - Secure DH encryption enabled for client tcp_client_1
+2025-09-15 12:02:11,351 - MessageProcessor - INFO - Received encrypted message from client tcp_client_1
+2025-09-15 12:02:11,354 - EncryptionManager - DEBUG - Successfully decrypted message for client tcp_client_1
+2025-09-15 12:02:11,354 - MessageProcessor - INFO - Decrypted message from tcp_client_1: Hello from client...
+2025-09-15 12:02:11,354 - TCPServer - DEBUG - [tcp_client_1] Sent response (264 bytes)
+2025-09-15 12:02:11,355 - TCPServer - INFO - Client tcp_client_1 disconnected.
+2025-09-15 12:02:11,356 - ClientManager - INFO - TCP client tcp_client_1 (encrypted) disconnected. Duration: 0:00:06.402103
+2025-09-15 12:02:11,356 - TCPServer - INFO - Client tcp_client_1 handler terminated
+2025-09-15 12:02:44,249 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-15 12:03:44,291 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-15 12:04:44,331 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-15 12:05:44,344 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-15 12:06:44,394 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-15 12:07:44,175 - root - INFO - 
+Shutdown requested...
+2025-09-15 12:07:44,177 - root - INFO - Shutting down server...
+2025-09-15 12:07:44,177 - TCPServer - INFO - Enhanced TCP Server shutdown complete
+2025-09-15 12:07:44,178 - UDPServer - ERROR - Error handling UDP message: [Errno 9] Bad file descriptor
+2025-09-15 12:07:44,178 - UDPServer - INFO - UDP Server shutdown complete
+2025-09-15 12:07:44,178 - UDPServer - INFO - UDP Server shutdown complete
+2025-09-15 12:07:44,266 - TCPServer - INFO - Enhanced TCP Server shutdown complete
+2025-09-15 12:07:46,183 - root - INFO - === Enhanced Server Shutdown Complete ===

@@ -1,0 +1,40 @@
+2025-09-15 12:07:52,779 - root - INFO - === Enhanced Resilient Server Starting ===
+2025-09-15 12:07:55,626 - EncryptionManager - INFO - DH parameters initialized successfully
+2025-09-15 12:07:55,626 - root - INFO - Enhanced server started successfully
+2025-09-15 12:07:55,626 - root - INFO - TCP and UDP Server: localhost:8080
+2025-09-15 12:07:55,626 - root - INFO - 🔒 Encryption: Modern DH key exchange enabled
+2025-09-15 12:07:55,626 - root - INFO - Server supports both encrypted and plain text clients
+2025-09-15 12:07:55,626 - root - INFO - Press Ctrl+C to shutdown
+2025-09-15 12:07:55,629 - UDPServer - INFO - UDP Server listening on localhost:8080
+2025-09-15 12:07:55,629 - TCPServer - INFO - Enhanced TCP Server listening on localhost:8080
+2025-09-15 12:07:59,398 - TCPServer - INFO - Handling client tcp_client_1 from ('127.0.0.1', 58828)
+2025-09-15 12:07:59,398 - TCPServer - DEBUG - Sent handshake request to tcp_client_1
+2025-09-15 12:07:59,433 - EncryptionManager - INFO - Shared key computed for client tcp_client_1
+2025-09-15 12:07:59,440 - TCPServer - INFO - Secure DH encryption enabled for client tcp_client_1
+2025-09-15 12:08:04,242 - MessageProcessor - INFO - Received encrypted message from client tcp_client_1
+2025-09-15 12:08:04,244 - EncryptionManager - DEBUG - Successfully decrypted message for client tcp_client_1
+2025-09-15 12:08:04,244 - MessageProcessor - INFO - Decrypted message from tcp_client_1: Hello From Client...
+2025-09-15 12:08:04,244 - FaultSimulator - WARNING - [TCP] Simulating packet loss for client tcp_client_1
+2025-09-15 12:08:04,244 - TCPServer - DEBUG - [tcp_client_1] Sent response (10 bytes)
+2025-09-15 12:08:04,244 - MessageProcessor - INFO - Received encrypted message from client tcp_client_1
+2025-09-15 12:08:04,245 - EncryptionManager - DEBUG - Successfully decrypted message for client tcp_client_1
+2025-09-15 12:08:04,245 - MessageProcessor - INFO - Decrypted message from tcp_client_1: Hello From Client...
+2025-09-15 12:08:04,245 - FaultSimulator - WARNING - [TCP] Simulating data corruption for client tcp_client_1
+2025-09-15 12:08:04,245 - TCPServer - DEBUG - [tcp_client_1] Sent response (264 bytes)
+2025-09-15 12:08:04,245 - MessageProcessor - INFO - Received encrypted message from client tcp_client_1
+2025-09-15 12:08:04,245 - EncryptionManager - DEBUG - Successfully decrypted message for client tcp_client_1
+2025-09-15 12:08:04,245 - MessageProcessor - INFO - Decrypted message from tcp_client_1: Hello From Client...
+2025-09-15 12:08:04,245 - FaultSimulator - WARNING - [TCP] Simulating data corruption for client tcp_client_1
+2025-09-15 12:08:04,245 - TCPServer - DEBUG - [tcp_client_1] Sent response (264 bytes)
+2025-09-15 12:08:04,245 - TCPServer - INFO - Client tcp_client_1 disconnected.
+2025-09-15 12:08:04,245 - ClientManager - INFO - TCP client tcp_client_1 (encrypted) disconnected. Duration: 0:00:04.849329
+2025-09-15 12:08:04,245 - TCPServer - INFO - Client tcp_client_1 handler terminated
+2025-09-15 12:08:14,580 - root - INFO - 
+Shutdown requested...
+2025-09-15 12:08:14,582 - root - INFO - Shutting down server...
+2025-09-15 12:08:14,582 - TCPServer - INFO - Enhanced TCP Server shutdown complete
+2025-09-15 12:08:14,582 - UDPServer - ERROR - Error handling UDP message: [Errno 9] Bad file descriptor
+2025-09-15 12:08:14,583 - UDPServer - INFO - UDP Server shutdown complete
+2025-09-15 12:08:14,583 - UDPServer - INFO - UDP Server shutdown complete
+2025-09-15 12:08:15,414 - TCPServer - INFO - Enhanced TCP Server shutdown complete
+2025-09-15 12:08:16,588 - root - INFO - === Enhanced Server Shutdown Complete ===
