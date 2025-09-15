@@ -1,3 +1,55 @@
+# Table of Contents
+
+1. **Introduction**  
+   1.1 Overview  
+   1.2 Objectives  
+
+2. **Implementation**  
+   2.1 Development Environment  
+   2.2 Source Code  
+
+3. **Results**  
+   3.1 Packet Inspection & Security  
+   - 3.1.1 Setup Web Server  
+   - 3.1.2 Send Data from Client to Server  
+   - 3.1.3 Identify the Frames and Packets  
+   - 3.1.4 Analysis  
+   - 3.1.5 Improvements  
+
+   3.2 Client-Server Communication with Fault Tolerance  
+   - 3.2.1 Setup Echo Server  
+   - 3.2.2 Simulate Network Faults  
+   - 3.2.3 Analysis  
+   - 3.2.4 Improvements  
+
+   3.3 Developing a Resilient Client Program  
+   - 3.3.1 Overview  
+   - 3.3.2 Features  
+   - 3.3.3 Error Simulation  
+   - 3.3.4 Example Usage  
+   - 3.3.5 Analysis  
+   - 3.3.6 Improvements  
+
+   3.4 Designing & Testing an Echo Server  
+   - 3.4.1 Overview  
+   - 3.4.2 Features  
+   - 3.4.3 Main Components  
+   - 3.4.4 Security Features  
+   - 3.4.5 Example Usage  
+   - 3.4.6 Analysis  
+
+4. **Discussion**  
+   4.1 Protocol Comparison Analysis  
+   4.2 Challenges  
+
+5. **Conclusion**  
+   5.1 Learning Outcomes  
+   5.2 Future Enhancement
+
+
+
+<div style="page-break-after: always;"></div>
+
 # 1.0 Introduction
 
 Network programming is a critical component of modern distributed systems, allowing applications to communicate over a network on different machines. This assignment addresses core elements of network sockets through hands-on practice using Python. Emphasis will be placed on client-server architecture, security vulnerabilities, and fault-tolerant implementations of communication networks.
@@ -6,10 +58,14 @@ The most important objective is to assure the understanding of network programmi
 
 ### Objectives
 
-- Understand network socket programming concepts and implementation
-- Analyze network security vulnerabilities through packet inspection
-- Implement fault-tolerant client-server communication systems
-- Develop scalable and secure network applications
+-   Understand network socket programming concepts and implementation
+-   Analyze network security vulnerabilities through packet inspection
+-   Implement fault-tolerant client-server communication systems
+-   Develop scalable and secure network applications
+
+
+
+------
 
 
 
@@ -17,17 +73,17 @@ The most important objective is to assure the understanding of network programmi
 
 ### Development Environment
 
-- **Operating System:** MacOS 15.4
-- **Programming Language:** Python
-- **Tools Used:** netcat, Wireshark, Python library, Visual Code Studio, GitHub
-
-
+-   **Operating System:** MacOS 15.4
+-   **Programming Language:** Python
+-   **Tools Used:** netcat, Wireshark, Python library, Visual Code Studio, GitHub
 
 ### Source Code
 
-https://github.com/chriyocc/assignment
+<https://github.com/chriyocc/assignment>
 
-![QR Code](/Users/yoyojun/Library/Mobile Documents/com~apple~CloudDocs/My UNI/Y2S1/Electronics III/QR Code.png)
+![QR Code](/Users/yoyojun/Library/Mobile%20Documents/com~apple~CloudDocs/My%20UNI/Y2S1/Electronics%20III/QR%20Code.png)
+
+<div style="page-break-after: always;"></div>
 
 # 3.0 Results
 
@@ -37,7 +93,7 @@ https://github.com/chriyocc/assignment
 
 First, I implemented a simple web server on localhost:8080 using Python. This server will waits for a client connection, receives data and prints it.
 
-```python
+``` python
 import socket
 
 while True:
@@ -78,30 +134,32 @@ while True:
 
 Next, I connected to the server using Netcat and sent the string "Hello from Client":
 
-```cmd
+``` cmd
 yoyojun@yoyojuns-MacBook-Air ~ % nc localhost 8080
 Hello from Client
 ```
 
 On the server side, it successfully received the data and prints it out:
 
-```cmd
+``` cmd
 Got connection from ('127.0.0.1', 53370)
 Hello from Client
 ```
+
+
 
 ### 3.1.3 Identify the Frames and Packets
 
 Using WireShark, I captured the packets exchange between server and client.
 
-| No.  | Time     | Source    | Destination | Protocol | Length | Info                                                         |
-| ---- | -------- | --------- | ----------- | -------- | ------ | ------------------------------------------------------------ |
-| 1    | 0.000000 | 127.0.0.1 | 127.0.0.1   | TCP      | 75     | 54830 → 8080 [PSH, ACK] Seq=1 Ack=1 Win=6380 Len=19 TSval=1617315918 TSecr=3123084692 |
-| 2    | 0.000098 | 127.0.0.1 | 127.0.0.1   | TCP      | 56     | 8080 → 54830 [ACK] Seq=1 Ack=20 Win=6380 Len=0 TSval=3123626038 TSecr=1617315918 |
+| No. | Time | Source | Destination | Protocol | Length | Info |
+|----------|----------|----------|----------|----------|----------|-----------------|
+| 1 | 0.000000 | 127.0.0.1 | 127.0.0.1 | TCP | 75 | 54830 → 8080 [PSH, ACK] Seq=1 Ack=1 Win=6380 Len=19 TSval=1617315918 TSecr=3123084692 |
+| 2 | 0.000098 | 127.0.0.1 | 127.0.0.1 | TCP | 56 | 8080 → 54830 [ACK] Seq=1 Ack=20 Win=6380 Len=0 TSval=3123626038 TSecr=1617315918 |
 
 **Frame 1**, the client sends the text ("Hello from Client") to the server in plain text (hex + ASCII view):
 
-```
+```         
 0000   02 00 00 00 45 00 00 47 00 00 40 00 40 06 00 00   ....E..G..@.@...
 0010   7f 00 00 01 7f 00 00 01 d6 2e 1f 90 73 14 80 7a   ............s..z
 0020   26 99 f4 b8 80 18 18 ec fe 3b 00 00 01 01 08 0a   &........;......
@@ -111,21 +169,25 @@ Using WireShark, I captured the packets exchange between server and client.
 
 **Frame 2,** the server replied with an ACK, confirming it successfully received the data:
 
-```
+```         
 0000   02 00 00 00 45 00 00 34 00 00 40 00 40 06 00 00   ....E..4..@.@...
 0010   7f 00 00 01 7f 00 00 01 1f 90 d6 2e 26 99 f4 b8   ............&...
 0020   73 14 80 8d 80 10 18 ec fe 28 00 00 01 01 08 0a   s........(......
 0030   ba 2e c0 36 60 66 48 4e                           ...6`fHN
 ```
 
+
+
 ### 3.1.4 Analysis
 
-From 3.1.2, 
+From 3.1.2,
 
-- The message is fully visible in plain text.
-- The data is not encrypted, meaning any sensitive data like usernames and passwords could be easily sniffed by attackers.
+-   The message is fully visible in plain text.
+-   The data is not encrypted, meaning any sensitive data like usernames and passwords could be easily sniffed by attackers.
 
 This demonsrates a fundamental security weakness of raw TCP sockets.
+
+
 
 ### 3.1.5 Improvements
 
@@ -133,19 +195,17 @@ To enhance security while data transmission, use encrypted socket like SSL/TLS a
 
 
 
-------
+------------------------------------------------------------------------
 
 
 
 ## 3.2 Client-Server Communication with Fault Tolerance
 
-
-
 ### 3.2.1 Setup Echo Server
 
 Using the same code in section 3.1, with the addition of `conn.send(data)` to return received messages to the client:
 
-```python
+``` python
 import socket, random, time
 
 while True:
@@ -167,7 +227,7 @@ while True:
                 if not data:  # Handle connection closed
                     print("Client disconnected")
                     break
-								
+                                
                 # Fault injection (3.2.2) goes here
                 
             except:
@@ -189,69 +249,63 @@ while True:
 
 To demonstrate fault tolerance, I artificially introduce delay, packet loss, and corruption before returning data to the client.
 
-**A. Network Delay: **
+**A. Network Delay:**
 
 A fixed delay was inserted before sending the response:
 
-```python
+``` python
 # Fault injection (Line:23)
 delay = 1.0
 time.sleep(delay)
 ```
 
-
-
 In Wireshark, the message took `~1.0066` seconds longer to appear:
 
-| No.  | Time     | Source    | Destination | Protocol | Length | Info                                                         |
-| ---- | -------- | --------- | ----------- | -------- | ------ | ------------------------------------------------------------ |
-| 7    | 8.665673 | 127.0.0.1 | 127.0.0.1   | TCP      | 62     | 57593  >  8080 [PSH, ACK] Seq=1 Ack=1 Win=408320 Len=6 TSval=3949452411 TSecr=1283379236 |
-| 8    | 8.665769 | 127.0.0.1 | 127.0.0.1   | TCP      | 56     | 8080  >  57593 [ACK] Seq=1 Ack=7 Win=408320 Len=0 TSval=1283387902 TSecr=3949452411 |
-| 9    | 9.672276 | 127.0.0.1 | 127.0.0.1   | TCP      | 62     | 8080  >  57593 [PSH, ACK] Seq=1 Ack=7 Win=408320 Len=6 TSval=1283388909 TSecr=3949452411 |
-| 10   | 9.672375 | 127.0.0.1 | 127.0.0.1   | TCP      | 56     | 57593  >  8080 [ACK] Seq=7 Ack=7 Win=408320 Len=0 TSval=3949453418 TSecr=1283388909 |
+| No. | Time | Source | Destination | Protocol | Length | Info |
+|----------|----------|----------|----------|----------|----------|-----------------|
+| 7 | 8.665673 | 127.0.0.1 | 127.0.0.1 | TCP | 62 | 57593 \> 8080 [PSH, ACK] Seq=1 Ack=1 Win=408320 Len=6 TSval=3949452411 TSecr=1283379236 |
+| 8 | 8.665769 | 127.0.0.1 | 127.0.0.1 | TCP | 56 | 8080 \> 57593 [ACK] Seq=1 Ack=7 Win=408320 Len=0 TSval=1283387902 TSecr=3949452411 |
+| 9 | 9.672276 | 127.0.0.1 | 127.0.0.1 | TCP | 62 | 8080 \> 57593 [PSH, ACK] Seq=1 Ack=7 Win=408320 Len=6 TSval=1283388909 TSecr=3949452411 |
+| 10 | 9.672375 | 127.0.0.1 | 127.0.0.1 | TCP | 56 | 57593 \> 8080 [ACK] Seq=7 Ack=7 Win=408320 Len=0 TSval=3949453418 TSecr=1283388909 |
 
 The delay matching the configured 1s delay.
-
-
 
 **B. Packet Loss**
 
 Instead of echoing back the original data, the server discards it and returns an fake error message:
 
-```python
+``` python
 #Will simulate Network Fault(3.2.1) here: (Line:23)
 msg = "Packet Loss"
 print(f"Simulating {msg}")
 data = msg.encode() #.send() required bytes-like object
 ```
 
-| No.  | Time      | Source    | Destination | Protocol | Length | Info                                                         |
-| ---- | --------- | --------- | ----------- | -------- | ------ | ------------------------------------------------------------ |
-| 7    | 14.355958 | 127.0.0.1 | 127.0.0.1   | TCP      | 62     | 57917  >  8080 [PSH, ACK] Seq=1 Ack=1 Win=408320 Len=6 TSval=526340350 TSecr=392279892 |
-| 8    | 14.356057 | 127.0.0.1 | 127.0.0.1   | TCP      | 56     | 8080  >  57917 [ACK] Seq=1 Ack=7 Win=408320 Len=0 TSval=392294249 TSecr=526340350 |
-| 9    | 14.356311 | 127.0.0.1 | 127.0.0.1   | TCP      | 67     | 8080  >  57917 [PSH, ACK] Seq=1 Ack=7 Win=408320 Len=11 TSval=392294249 TSecr=526340350 [TCP segment of a reassembled PDU] |
-| 10   | 14.356350 | 127.0.0.1 | 127.0.0.1   | TCP      | 56     | 57917  >  8080 [ACK] Seq=7 Ack=12 Win=408320 Len=0 TSval=526340350 TSecr=392294249 |
+| No. | Time | Source | Destination | Protocol | Length | Info |
+|----------|----------|----------|----------|----------|----------|-----------------|
+| 7 | 14.355958 | 127.0.0.1 | 127.0.0.1 | TCP | 62 | 57917 \> 8080 [PSH, ACK] Seq=1 Ack=1 Win=408320 Len=6 TSval=526340350 TSecr=392279892 |
+| 8 | 14.356057 | 127.0.0.1 | 127.0.0.1 | TCP | 56 | 8080 \> 57917 [ACK] Seq=1 Ack=7 Win=408320 Len=0 TSval=392294249 TSecr=526340350 |
+| 9 | 14.356311 | 127.0.0.1 | 127.0.0.1 | TCP | 67 | 8080 \> 57917 [PSH, ACK] Seq=1 Ack=7 Win=408320 Len=11 TSval=392294249 TSecr=526340350 [TCP segment of a reassembled PDU] |
+| 10 | 14.356350 | 127.0.0.1 | 127.0.0.1 | TCP | 56 | 57917 \> 8080 [ACK] Seq=7 Ack=12 Win=408320 Len=0 TSval=526340350 TSecr=392294249 |
 
-**Frame 7**, client side sent `Test1` to server: 
+**Frame 7**, client side sent `Test1` to server:
 
-```
+```         
 0030   1f 5f 50 fe 17 61 b7 54 54 65 73 74 31 0a         ._P..a.TTest1.
 ```
 
-**Frame 9,** server sent back an error `Packet Loss`: 
+**Frame 9,** server sent back an error `Packet Loss`:
 
-```
+```         
 0030   17 61 ef 69 1f 5f 50 fe 50 61 63 6b 65 74 20 4c   .a.i._P.Packet L
 0040   6f 73 73                                          oss
 ```
 
 This simulates how the application layer can signal lost data.
 
-
-
 **C. Packet Corruption**
 
-```python
+``` python
 msg = "Corruption"
 print(f"Simulating {msg}")
 corrupted = bytearray(data)
@@ -260,22 +314,22 @@ corrupted[random.randint(0, len(corrupted) - 2)] ^= 0xFF #avoid trailing "\n"
 data = bytes(corrupted)
 ```
 
-| No.  | Time     | Source    | Destination | Protocol | Length | Info                                                         |
-| ---- | -------- | --------- | ----------- | -------- | ------ | ------------------------------------------------------------ |
-| 7    | 4.289459 | 127.0.0.1 | 127.0.0.1   | TCP      | 62     | 58384  >  8080 [PSH, ACK] Seq=1 Ack=1 Win=408320 Len=6 TSval=1910981597 TSecr=3075230498 |
-| 8    | 4.289566 | 127.0.0.1 | 127.0.0.1   | TCP      | 56     | 8080  >  58384 [ACK] Seq=1 Ack=7 Win=408320 Len=0 TSval=3075234788 TSecr=1910981597 |
-| 9    | 4.289834 | 127.0.0.1 | 127.0.0.1   | TCP      | 62     | 8080  >  58384 [PSH, ACK] Seq=1 Ack=7 Win=408320 Len=6 TSval=3075234788 TSecr=1910981597 |
-| 10   | 4.289867 | 127.0.0.1 | 127.0.0.1   | TCP      | 56     | 58384  >  8080 [ACK] Seq=7 Ack=7 Win=408320 Len=0 TSval=1910981597 TSecr=3075234788 |
+| No. | Time | Source | Destination | Protocol | Length | Info |
+|----------|----------|----------|----------|----------|----------|-----------------|
+| 7 | 4.289459 | 127.0.0.1 | 127.0.0.1 | TCP | 62 | 58384 \> 8080 [PSH, ACK] Seq=1 Ack=1 Win=408320 Len=6 TSval=1910981597 TSecr=3075230498 |
+| 8 | 4.289566 | 127.0.0.1 | 127.0.0.1 | TCP | 56 | 8080 \> 58384 [ACK] Seq=1 Ack=7 Win=408320 Len=0 TSval=3075234788 TSecr=1910981597 |
+| 9 | 4.289834 | 127.0.0.1 | 127.0.0.1 | TCP | 62 | 8080 \> 58384 [PSH, ACK] Seq=1 Ack=7 Win=408320 Len=6 TSval=3075234788 TSecr=1910981597 |
+| 10 | 4.289867 | 127.0.0.1 | 127.0.0.1 | TCP | 56 | 58384 \> 8080 [ACK] Seq=7 Ack=7 Win=408320 Len=0 TSval=1910981597 TSecr=3075234788 |
 
-**Frame 7**, client side sent `Test1` to server: 
+**Frame 7**, client side sent `Test1` to server:
 
-```
+```         
 0030   71 e7 43 dd b7 4c 4b 22 54 65 73 74 31 0a         q.C..LK"Test1.
 ```
 
-**Frame 9**, one letter of the text is corrupted and result in `Te?t1`: 
+**Frame 9**, one letter of the text is corrupted and result in `Te?t1`:
 
-```
+```         
 0030   b7 4c 5b e4 71 e7 43 dd 54 65 8c 74 31 0a         .L[.q.C.Te.t1.
 ```
 
@@ -283,9 +337,9 @@ data = bytes(corrupted)
 
 ### 3.2.3 Analysis
 
-- **Delay:** messages arrive late
-- **Packet Loss: ** response is replaced or missing
-- **Corruption:** response is altered
+-   **Delay:** messages arrive late
+-   **Packet Loss:** response is replaced or missing
+-   **Corruption:** response is altered
 
 In these cases, the communication is unreliable without additional protection.
 
@@ -295,19 +349,17 @@ In these cases, the communication is unreliable without additional protection.
 
 To make the system reliable:
 
-- **Retransmission:** client will resends if no valid reply within a timeout
-- **Error Detection:** add checksums or hashes to detect errors
-- **Acknowledgments:** server confirms message receipt with sequence numbers.
+-   **Retransmission:** client will resends if no valid reply within a timeout
+-   **Error Detection:** add checksums or hashes to detect errors
+-   **Acknowledgments:** server confirms message receipt with sequence numbers.
 
 
 
-------
+------------------------------------------------------------------------
 
 
 
 ## 3.3 Developing a Resilient Client Program
-
-
 
 ### 3.3.1 Overview
 
@@ -315,12 +367,12 @@ This program implements a fault-tolerant multi-client–server system over both 
 
 This system consist of two main modules:
 
-- `server.py` → Provides a resilient server that handles both TCP and UDP connections and simulates various network faults for testing
-- `client.py` → Implements a client capable of sending validated messages with checksums, handling retransmissions and error detection.
+-   `server.py` → Provides a resilient server that handles both TCP and UDP connections and simulates various network faults for testing
+-   `client.py` → Implements a client capable of sending validated messages with checksums, handling retransmissions and error detection.
 
 #### `server.py`
 
-```python
+``` python
 import socket, random, time
 import threading
 
@@ -437,11 +489,9 @@ if __name__ == "__main__":
         print("\n[MAIN] Shutting down servers...")
 ```
 
-
-
 #### `client.py`
 
-```python
+``` python
 import socket
 import sys
 import hashlib
@@ -551,17 +601,18 @@ if __name__ == "__main__":
 
 ### 3.3.2 Features
 
-- **Dual Protocol Support**: Both TCP and UDP communication protocols
-- **Security**: Input validation and security checks malicious content
-- **Fault Tolerance**: Automatic retry mechanisms, connection recovery, and error handling
-- **Message Integrity**: Message integrity verification using SHA1 checksums, SHA-1 (Secure Hash Algorithm 1) is a cryptographic hash function that generates a 160-bit (40-hexadecimal-digit) hash value from any input data. 
-- **Fault simulation: ** Simulate network errors such as network delay, package corruption and packet loss
-  - Packet loss simulation (20% probability)
-  
-  - Network delay simulation (20% probability, up to 10 seconds)
-  
-  - Data corruption simulation (20% probability)
-  - No fault (40% probability)
+-   **Dual Protocol Support**: Both TCP and UDP communication protocols
+-   **Security**: Input validation and security checks malicious content
+-   **Fault Tolerance**: Automatic retry mechanisms, connection recovery, and error handling
+-   **Message Integrity**: Message integrity verification using SHA1 checksums, SHA-1 (Secure Hash Algorithm 1) is a cryptographic hash function that generates a 160-bit (40-hexadecimal-digit) hash value from any input data.
+-   **Fault simulation:** Simulate network errors such as network delay, package corruption and packet loss
+    -   Packet loss simulation (20% probability)
+
+    -   Network delay simulation (20% probability, up to 10 seconds)
+
+    -   Data corruption simulation (20% probability)
+
+    -   No fault (40% probability)
 
 
 
@@ -569,109 +620,106 @@ if __name__ == "__main__":
 
 This server includes built-in random fault simulation to test client resilience:
 
-1. **Packet Loss Testing** 
+1.  **Packet Loss Testing**
 
-   Server randomly drops a packetsClient automatic retry 3 attempts.
-   The client automatically retries up to three times when it detects an invalid or missing response.
+    Server randomly drops a packetsClient automatic retry 3 attempts. The client automatically retries up to three times when it detects an invalid or missing response.
 
-   **Example output:**
+    **Example output:**
 
-   `server.py`
+    `server.py`
 
-   ```cmd
-   [TCP SERVER] Message Received: Hey|e4599fa9
-   [TCP SERVER] Simulating packet loss
-   
-   [TCP SERVER] Sent response.
-   
-   [TCP SERVER] Message Received: Hey|e4599fa9
-   [TCP SERVER] Simulating packet loss
-   
-   [TCP SERVER] Sent response.
-   
-   [TCP SERVER] Message Received: Hey|e4599fa9
-   [TCP SERVER] Simulating packet loss
-   
-   [TCP SERVER] Sent response.
-   ```
+    ``` cmd
+    [TCP SERVER] Message Received: Hey|e4599fa9
+    [TCP SERVER] Simulating packet loss
 
-   `client.py`
+    [TCP SERVER] Sent response.
 
-   ```cmd
-   [CLIENT] Enter something: Hey
-   [CLIENT] Message is ready to send: (Hey|e4599fa9)
-   [CLIENT] Attempts: 1
-   [CLIENT] Message received: error_code
-   [CLIENT] Invalid format (possible attack)
-   [CLIENT] Attempts: 2
-   [CLIENT] Message received: error_code
-   [CLIENT] Invalid format (possible attack)
-   [CLIENT] Attempts: 3
-   [CLIENT] Message received: error_code
-   [CLIENT] Invalid format (possible attack)
-   [CLIENT] Connection closed
-   ```
+    [TCP SERVER] Message Received: Hey|e4599fa9
+    [TCP SERVER] Simulating packet loss
 
-   
+    [TCP SERVER] Sent response.
 
-2. **Delay Testing**
+    [TCP SERVER] Message Received: Hey|e4599fa9
+    [TCP SERVER] Simulating packet loss
 
-   Random delays up to 10 seconds to simulate network latency.
+    [TCP SERVER] Sent response.
+    ```
 
-   If a response does not arrive within the client’s timeout, the client retries the transmission, 3 attempts in total.
+    `client.py`
 
-   **Example output:**
+    ``` cmd
+    [CLIENT] Enter something: Hey
+    [CLIENT] Message is ready to send: (Hey|e4599fa9)
+    [CLIENT] Attempts: 1
+    [CLIENT] Message received: error_code
+    [CLIENT] Invalid format (possible attack)
+    [CLIENT] Attempts: 2
+    [CLIENT] Message received: error_code
+    [CLIENT] Invalid format (possible attack)
+    [CLIENT] Attempts: 3
+    [CLIENT] Message received: error_code
+    [CLIENT] Invalid format (possible attack)
+    [CLIENT] Connection closed
+    ```
 
-   `server.py`
+2.  **Delay Testing**
 
-   ```cmd
-   [TCP SERVER] Message Received: Hey|e4599fa9
-   [TCP SERVER] Simulating delay(s): 5.747517592904991
-   
-   [TCP SERVER] Sent response.
-   ```
+    Random delays up to 10 seconds to simulate network latency.
 
-   `client.py`
+    If a response does not arrive within the client’s timeout, the client retries the transmission, 3 attempts in total.
 
-   ```cmd
-   [CLIENT] Enter something: Hey
-   [CLIENT] Message is ready to send: (Hey|e4599fa9)
-   [CLIENT] Attempts: 1
-   [CLIENT] Timeout, retrying...
-   [CLIENT] Attempts: 2
-   [CLIENT] Message received: Hey|e4599fa9
-   [CLIENT] Current: e4599fa9 & Original: e4599fa9
-   [CLIENT] Received valid reply: Hey
-   ```
+    **Example output:**
 
-3. **Corruption Testing**
+    `server.py`
 
-   Randomly flip a bit of client message.
+    ``` cmd
+    [TCP SERVER] Message Received: Hey|e4599fa9
+    [TCP SERVER] Simulating delay(s): 5.747517592904991
 
-   The client validates the checksum in the reply and rejects messages with mismatched checksums.
+    [TCP SERVER] Sent response.
+    ```
 
-   **Example output:**
+    `client.py`
 
-   `server.py`
+    ``` cmd
+    [CLIENT] Enter something: Hey
+    [CLIENT] Message is ready to send: (Hey|e4599fa9)
+    [CLIENT] Attempts: 1
+    [CLIENT] Timeout, retrying...
+    [CLIENT] Attempts: 2
+    [CLIENT] Message received: Hey|e4599fa9
+    [CLIENT] Current: e4599fa9 & Original: e4599fa9
+    [CLIENT] Received valid reply: Hey
+    ```
 
-   ```cmd
-   [TCP SERVER] Message Received: Test3|5e595222
-   [TCP SERVER] Simulating corruption
-   [TCP SERVER] Corrupted data: b'\xabest3|5e595222'
-   
-   [TCP SERVER] Sent response.
-   ```
+3.  **Corruption Testing**
 
-   `client.py`
+    Randomly flip a bit of client message.
 
-   ```
-   [CLIENT] Enter something: Test3
-   [CLIENT] Message is ready to send: (Test3|5e595222)
-   [CLIENT] Attempts: 1
-   [CLIENT] Message received: �est3|5e595222
-   [CLIENT] Current: 86e1ea1e & Original: 5e595222
-   [CLIENT] Checksum mismatch (possible corruption)
-   ```
+    The client validates the checksum in the reply and rejects messages with mismatched checksums.
+
+    **Example output:**
+
+    `server.py`
+
+    ``` cmd
+    [TCP SERVER] Message Received: Test3|5e595222
+    [TCP SERVER] Simulating corruption
+    [TCP SERVER] Corrupted data: b'\xabest3|5e595222'
+    
+    [TCP SERVER] Sent response.
+    ```
+
+    `client.py`
+
+    ```         
+    [CLIENT] Enter something: Test3
+    [CLIENT] Message is ready to send: (Test3|5e595222)
+    [CLIENT] Attempts: 1
+    [CLIENT] Message received: �est3|5e595222
+    [CLIENT] Current: 86e1ea1e & Original: 5e595222
+    [CLIENT] Checksum mismatch (possible corruption)
+    ```
 
 
 
@@ -679,25 +727,21 @@ This server includes built-in random fault simulation to test client resilience:
 
 #### Start server
 
-```cmd
+``` cmd
 python server.py
 ```
 
-
-
 #### Start client
 
-```
+```         
 python client.py
 ```
-
-
 
 #### Example Terminal session:
 
 `server.py`
 
-```cmd
+``` cmd
 [TCP SERVER] Listening on localhost:8080
 [UDP SERVER] Listening on localhost:8080
 [MAIN] TCP and UDP servers are running...
@@ -718,7 +762,7 @@ python client.py
 
 `client.py`
 
-```cmd
+``` cmd
 #TCP
 [CLIENT] Choose UDP/TCP: TCP
 [CLIENT] Connected to localhost:8080 via TCP
@@ -738,18 +782,16 @@ python client.py
 [CLIENT] Attempts: 1
 ```
 
-
-
 #### Explanation
 
-1. The server starts and listens on port 8080 for both TCP and UDP connections.
-2. The client connects via TCP and sends `Packet1` with its checksum.
-3. The server, using its fault-injection module, randomly flips a bit in the message and send back to client.
-4. The client verifies the checksum, detects a mismatch, and warns: **(possible corruption)**.
-5. Connection closes.
-6. Client sends a message (`Test4|1c77599f`) to the UDP server (same port as TCP, localhost:8080).
-7. The server receives the message without requiring a persistent connection.
-8. Connection closes.
+1.  The server starts and listens on port 8080 for both TCP and UDP connections.
+2.  The client connects via TCP and sends `Packet1` with its checksum.
+3.  The server, using its fault-injection module, randomly flips a bit in the message and send back to client.
+4.  The client verifies the checksum, detects a mismatch, and warns: **(possible corruption)**.
+5.  Connection closes.
+6.  Client sends a message (`Test4|1c77599f`) to the UDP server (same port as TCP, localhost:8080).
+7.  The server receives the message without requiring a persistent connection.
+8.  Connection closes.
 
 
 
@@ -761,10 +803,14 @@ This resilient client-server system well demonstrates how network faults impact 
 
 ### 3.3.6 Improvements
 
-- Implement safer encryption support
-- Authentication mechanisms
-- Supports multiple clients simultaneously
-- Logging framework integration
+-   Implement safer encryption support
+-   Authentication mechanisms
+-   Supports multiple clients simultaneously
+-   Logging framework integration
+
+
+
+------
 
 
 
@@ -776,20 +822,20 @@ This system is a robust network server implementation that supports multiple con
 
 (As the source code is too long, only the most relevant sections are shown in this report. Full source code is available at below link.)
 
-**Source code:** https://github.com/chriyocc/assignment
+**Source code:** <https://github.com/chriyocc/assignment>
 
 
 
 ### 3.4.2 Features
 
-- **Concurrent Multi-Client Support**: Handles multiple simultaneous connections
-- **Dual Protocol Support**: Both TCP and UDP communication protocols
-- **Advanced Security**: Diffie-Hellman key exchange with AES encryption
-- **Fault Tolerance**: Automatic retry mechanisms, connection recovery, and error handling
-- **Comprehensive Logging**: Multi-level logging with file and console output
-- **Message Integrity**: SHA256 checksums for data validation
-- **Scalability**: Modular design supporting horizontal scaling
-- **Fault simulation: ** Simulate network errors such as network delay, package corruption and packet loss
+-   **Concurrent Multi-Client Support**: Handles multiple simultaneous connections
+-   **Dual Protocol Support**: Both TCP and UDP communication protocols
+-   **Advanced Security**: Diffie-Hellman key exchange with AES encryption
+-   **Fault Tolerance**: Automatic retry mechanisms, connection recovery, and error handling
+-   **Comprehensive Logging**: Multi-level logging with file and console output
+-   **Message Integrity**: SHA256 checksums for data validation
+-   **Scalability**: Modular design supporting horizontal scaling
+-   **Fault simulation:** Simulate network errors such as network delay, package corruption and packet loss
 
 
 
@@ -799,24 +845,24 @@ This system is a robust network server implementation that supports multiple con
 
 EncryptionManager class handles all the cryptographic operations including Diffie-Hellman(DH) key exchange and message encryption and decryption.
 
-**Diffie–Hellman** (**DH**) **key exchange **is a mathematical method of securely generating a symmetric cryptographic key over a public channel.
+**Diffie–Hellman** (**DH**) **key exchange** is a mathematical method of securely generating a symmetric cryptographic key over a public channel.
 
 **Key Methods**:
 
-- `initialize_dh_parameters()`: Sets up DH parameters for key exchange
-- `compute_shared_key()`: Computes shared encryption keys with clients
-- `encrypt_message()` / `decrypt_message()`: AES encryption using Fernet
-- `get_dh_parameters_bytes()`: Returns DH parameters for client handshake
+-   `initialize_dh_parameters()`: Sets up DH parameters for key exchange
+-   `compute_shared_key()`: Computes shared encryption keys with clients
+-   `encrypt_message()` / `decrypt_message()`: AES encryption using Fernet
+-   `get_dh_parameters_bytes()`: Returns DH parameters for client handshake
 
 **Features:**
 
-- 2048-bit Diffie-Hellman key exchange
-- HKDF (HMAC-based Key Derivation Function) for key derivation
-- Unique keys per client session
+-   2048-bit Diffie-Hellman key exchange
+-   HKDF (HMAC-based Key Derivation Function) for key derivation
+-   Unique keys per client session
 
 **Code:**
 
-```python
+``` python
 ...
 def decrypt_message(self, encrypted_data, client_id):
       """Decrypt a message using the client's key"""
@@ -892,21 +938,19 @@ def encrypt_message(self, message, client_id):
           return message
 ```
 
-
-
 #### 2. MessageProcessor
 
 The MessageProcessor class handles the incoming messages, validates integrity and generates responses.
 
 **Key Methods**:
 
-- `parse_message()`: Parses and validates incoming message format
-- `create_response()`: Generates echo responses
-- `checksum()`: SHA256-based message integrity verification
+-   `parse_message()`: Parses and validates incoming message format
+-   `create_response()`: Generates echo responses
+-   `checksum()`: SHA256-based message integrity verification
 
 **Code:**
 
-```python
+``` python
 def checksum(self, msg: str) -> str:
       """Calculate SHA256 checksum"""
       return hashlib.sha256(msg.encode()).hexdigest()[:16]
@@ -934,21 +978,19 @@ def create_response(self, original_message, message_type, is_encrypted, client_i
           return f"{error_msg}|{checksum}|PLAIN"
 ```
 
-
-
 #### 3. ClientManager
 
 The ClientManager handles the client connections and states.
 
 **Key Methods**:
 
-- `add_tcp_client()`: Registers new TCP clients
-- `update_tcp_stats()`: Updates per-client statistics
-- `remove_tcp_client()`: Cleanup on client disconnection
+-   `add_tcp_client()`: Registers new TCP clients
+-   `update_tcp_stats()`: Updates per-client statistics
+-   `remove_tcp_client()`: Cleanup on client disconnection
 
 **Code:**
 
-```python
+``` python
  def add_tcp_client(self, client_id, conn, addr, encryption_password=None):
       """Add a new TCP client with optional encryption"""
       with self.lock:
@@ -964,21 +1006,19 @@ The ClientManager handles the client connections and states.
           }
 ```
 
-
-
 #### 4. EnhancedTCPServer
 
 The main TCP server that handle multiple client connections.
 
 **Key Methods**:
 
-- `handle_client()`: Per-client connection handler
-- `perform_dh_key_exchange()`: Secure handshake implementation
-- `start_server()`: Server initialization and binding
+-   `handle_client()`: Per-client connection handler
+-   `perform_dh_key_exchange()`: Secure handshake implementation
+-   `start_server()`: Server initialization and binding
 
 **Code:**
 
-```python
+``` python
 def run(self):
       """Main server loop"""
       if not self.start_server():
@@ -1013,15 +1053,13 @@ def run(self):
                       self.logger.error(f"Error accepting connection: {e}")
 ```
 
-
-
 #### 5. EnhancedUDPServer
 
 Handle UDP message connectionless. Parallel operation with TCP server.
 
 **Code:**
 
-```python
+``` python
 def run(self):
       """Main server loop"""
       if not self.start_server():
@@ -1053,70 +1091,64 @@ def run(self):
 
 #### Encryption Steps
 
-1. **Server Initialization**: Generates DH parameters (2048-bit)
-2. **Client Handshake**: Client requests encrypted communication
-3. **Parameter Exchange**: Server sends DH parameters
-4. **Key Generation**: Both parties generate private/public key pairs
-5. **Key Exchange**: Public keys are exchanged
-6. **Shared Secret**: Both compute identical shared secret
-7. **Key Derivation**: HKDF derives AES key from shared secret
-
-
+1.  **Server Initialization**: Generates DH parameters (2048-bit)
+2.  **Client Handshake**: Client requests encrypted communication
+3.  **Parameter Exchange**: Server sends DH parameters
+4.  **Key Generation**: Both parties generate private/public key pairs
+5.  **Key Exchange**: Public keys are exchanged
+6.  **Shared Secret**: Both compute identical shared secret
+7.  **Key Derivation**: HKDF derives AES key from shared secret
 
 #### Message Security
 
-- **Integrity**: SHA256 checksums prevent message tampering
-- **Confidentiality**: AES encryption protects message content
-
-
+-   **Integrity**: SHA256 checksums prevent message tampering
+-   **Confidentiality**: AES encryption protects message content
 
 #### Input Validation
 
-- Suspicious pattern detection (SQL injection, XSS, code execution)
+-   Suspicious pattern detection (SQL injection, XSS, code execution)
 
-  ```python
-  suspicious_patterns = [
-              "drop table", "delete from", "insert into", "update set",
-              "shutdown", "malware", "<script>", "javascript:", 
-              "exec(", "eval(", "system(", "__import__"
-          ]
-  ```
+    ``` python
+    suspicious_patterns = [
+                "drop table", "delete from", "insert into", "update set",
+                "shutdown", "malware", "<script>", "javascript:", 
+                "exec(", "eval(", "system(", "__import__"
+            ]
+    ```
 
-  
+
 
 ## 3.4.5 Example Usage
 
 #### Start Server
 
-```bash
+``` bash
 python server.py
 ```
 
 **Server Startup Process**:
 
-1. Initializes encryption components
-2. Creates log directory and files
-3. Starts TCP server on port 8080
-4. Starts UDP server on same port
-5. Displays configuration summary
-
-
+1.  Initializes encryption components
+2.  Creates log directory and files
+3.  Starts TCP server on port 8080
+4.  Starts UDP server on same port
+5.  Displays configuration summary
 
 #### Start Client (Accept multiple client)
 
-```bash
+``` bash
 python client_1.py
 ```
 
-```bash
+``` bash
 python client_2.py
 ```
 
 **Client options:**
 
-1. Protocol: TCP or UDP
-2. Server host: localhost (default) or custom IP
-3. Server port: 8080 (default) or custom port
+1.  Protocol: TCP or UDP
+2.  Server host: localhost (default) or custom IP
+3.  Server port: 8080 (default) or custom port
 
 
 
@@ -1126,7 +1158,7 @@ python client_2.py
 
 `server.py`
 
-```bash
+``` bash
 21:54:46 [INFO] === Enhanced Resilient Server Starting ===
 
 === ENHANCED SERVER CONFIGURATION ===
@@ -1161,11 +1193,9 @@ Shutdown requested...
 21:55:15 [INFO] === Enhanced Server Shutdown Complete ===
 ```
 
-
-
 `client.py`
 
-```bash
+``` bash
 === SIMPLE CLIENT CONFIGURATION ===
 Choose protocol (TCP/UDP) [TCP]: 
 Server host [localhost]: 
@@ -1202,11 +1232,9 @@ Connection Resets: 0
 [CLIENT] Goodbye!
 ```
 
-
-
 `server_YYYYMMDD_HHMMSS.log`
 
-```bash
+``` bash
 2025-09-14 21:54:46,982 - root - INFO - === Enhanced Resilient Server Starting ===
 2025-09-14 21:54:49,919 - EncryptionManager - INFO - DH parameters initialized successfully
 2025-09-14 21:54:49,919 - root - INFO - Enhanced server started successfully
@@ -1236,14 +1264,11 @@ Shutdown requested...
 2025-09-14 21:55:13,587 - UDPServer - INFO - UDP Server shutdown complete
 2025-09-14 21:55:14,400 - TCPServer - INFO - Enhanced TCP Server shutdown complete
 2025-09-14 21:55:15,593 - root - INFO - === Enhanced Server Shutdown Complete ===
-
 ```
-
-
 
 **Packet Analysis**
 
-```bash
+``` bash
 0000   02 00 00 00 45 00 01 3c 00 00 40 00 40 06 00 00   ....E..<..@.@...
 0010   7f 00 00 01 7f 00 00 01 1f 90 e5 09 1c d1 49 8c   ..............I.
 0020   b5 eb 60 a3 80 18 18 dd ff 30 00 00 01 01 08 0a   ..`......0......
@@ -1264,7 +1289,6 @@ Shutdown requested...
 0110   6e 63 72 79 70 74 65 64 5f 66 6c 61 67 22 3a 20   ncrypted_flag": 
 0120   74 72 75 65 7d 7c 65 66 33 31 65 35 38 62 63 35   true}|ef31e58bc5
 0130   65 63 66 63 35 61 7c 45 4e 43 52 59 50 54 45 44   ecfc5a|ENCRYPTED
-
 ```
 
 Message is encrypted.
@@ -1277,7 +1301,7 @@ Message is encrypted.
 
 `client.py`
 
-```bash
+``` bash
 === SIMPLE CLIENT CONFIGURATION ===
 Choose protocol (TCP/UDP) [TCP]: 
 Server host [localhost]: 
@@ -1332,21 +1356,62 @@ This implementation successfully demonstrates network programming concepts while
 
 
 
+------
+
+
+
 ## 4.0 Discussion
 
 ### 4.1 Protocol Comparison Analysis
 
-#### **TCP:**
+#### TCP
 
-- Reliable connection
-- Guaranteed delivery
-- Additional latency
+-   Reliable connection
+-   Guaranteed delivery
+-   Additional latency due to connection overhead
 
-#### UDP:
+#### UDP
 
-- Simplified implementation
-- No guarantee of message delivery
-- Lower latency
+-   Simplified implementation
+-   No guarantee of message delivery
+-   Lower latency
+-   Suitable for real-time applications
 
 
 
+
+
+### 4.2 Challenges
+
+-   Diffie-Hellman key exchange provides forward secrecy but increases handshake complexity
+-   Key management becomes critical for multi-client scenarios
+-   Plain TCP sockets expose all data to network sniffing attacks
+-   Without proper authentication, man-in-the-middle attacks become trivial
+
+
+
+------
+
+<div style="page-break-after: always;"></div>
+
+## 5.0 Conclusion
+
+The assignment effectively showcased the practical application of the concepts of network programming utilizing Python sockets. The developed solutions addressed various important challenges of modern network communication, including security, reliability, and scalability.
+
+### 5.1 Learning Outcomes
+
+**Protocol Understanding:**
+
+Comparison of TCP and UDP shows that they are complementary rather than opposing. Data integrity depends on TCP's dependability, whereas real-time applications benefit from UDP's performance features.
+
+**Implementation of Security:**
+
+The shift from unencrypted to encrypted communication showed that security cannot be neglected. The Diffie-Hellman implementation demonstrated how cryptographic protocols add operational complexity while offering mathematical guarantees. System design must carefully balance security and performance.
+
+**Fault Tolerance Design:**
+
+Network outages are not rare occurrences; they are inevitable. Robust applications need to assume unreliable networks and use comprehensive error handling, retry logic, and graceful degradation strategies, as demonstrated by the fault injection demo.
+
+### 5.2 Future Enhancement
+
+Several improvements are planned to adapt this system for production use. Enhancements by adopting asynchronous I/O to support such as scalabilitya and message queues. Security improvements with hardware security modules for key management, DDoS protection, rate limiting, and certificate-based authenticationt to improve security.
