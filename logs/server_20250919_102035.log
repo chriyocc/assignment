@@ -1,0 +1,154 @@
+2025-09-19 10:20:35,138 - root - INFO - === Enhanced Resilient Server Starting ===
+2025-09-19 10:20:43,966 - EncryptionManager - INFO - DH parameters initialized successfully
+2025-09-19 10:20:43,967 - root - INFO - Enhanced server started successfully
+2025-09-19 10:20:43,967 - root - INFO - TCP and UDP Server: localhost:8080
+2025-09-19 10:20:43,967 - root - INFO - 🔒 Encryption: Modern DH key exchange enabled
+2025-09-19 10:20:43,967 - root - INFO - Server supports both encrypted and plain text clients
+2025-09-19 10:20:43,967 - root - INFO - Press Ctrl+C to shutdown
+2025-09-19 10:20:43,971 - UDPServer - INFO - UDP Server listening on localhost:8080
+2025-09-19 10:20:43,971 - TCPServer - INFO - Enhanced TCP Server listening on localhost:8080
+2025-09-19 10:21:44,009 - root - INFO - Message Stats - Total: 0, Encrypted: 0, Plain: 0, Errors: 0
+2025-09-19 10:21:55,438 - TCPServer - INFO - Handling client tcp_client_1 from ('127.0.0.1', 52996)
+2025-09-19 10:21:55,438 - TCPServer - DEBUG - Sent handshake request to tcp_client_1
+2025-09-19 10:21:55,475 - EncryptionManager - INFO - Shared key computed for client tcp_client_1
+2025-09-19 10:21:55,483 - TCPServer - INFO - Secure DH encryption enabled for client tcp_client_1
+2025-09-19 10:22:09,895 - MessageProcessor - INFO - Received encrypted message from client tcp_client_1
+2025-09-19 10:22:09,898 - EncryptionManager - DEBUG - Successfully decrypted message for client tcp_client_1
+2025-09-19 10:22:09,899 - MessageProcessor - INFO - Decrypted message from tcp_client_1: Hello...
+2025-09-19 10:22:09,899 - TCPServer - DEBUG - [tcp_client_1] Sent response (240 bytes)
+2025-09-19 10:22:09,901 - TCPServer - INFO - Client tcp_client_1 disconnected.
+2025-09-19 10:22:09,902 - ClientManager - INFO - TCP client tcp_client_1 (encrypted) disconnected. Duration: 0:00:14.464452
+2025-09-19 10:22:09,902 - TCPServer - INFO - Client tcp_client_1 handler terminated
+2025-09-19 10:22:44,046 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:23:44,082 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:24:44,122 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:25:44,160 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:26:44,193 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:27:05,856 - UDPServer - INFO - Received UDP message from ('127.0.0.1', 56314)
+2025-09-19 10:27:44,231 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:28:44,268 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:29:44,303 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:30:44,352 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:31:44,388 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:32:44,423 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:33:44,464 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:34:44,509 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:35:44,554 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:36:44,590 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:37:44,622 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:38:44,645 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:39:44,690 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:40:44,730 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:41:44,771 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:42:44,813 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:43:44,866 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:44:44,914 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:45:44,944 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:46:44,983 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:47:45,025 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:48:45,060 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:49:45,096 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:50:45,142 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:51:45,181 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:52:45,209 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:53:45,250 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:54:45,284 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:55:45,313 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:56:45,348 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:57:45,379 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 10:59:59,340 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:00:59,400 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:01:59,448 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:02:59,480 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:03:59,518 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:04:59,546 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:05:59,588 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:06:59,660 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:07:59,734 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:08:59,799 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:09:59,866 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:10:59,904 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:11:59,940 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:12:59,970 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:14:00,013 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:30:47,486 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 11:48:48,177 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 12:06:07,560 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 12:24:05,172 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 12:41:02,585 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 12:57:56,059 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:14:02,586 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:15:28,174 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:16:28,244 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:17:28,295 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:18:28,367 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:19:28,449 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:32:37,747 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:36:18,981 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:37:19,028 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:38:19,081 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:39:19,107 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:40:19,143 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:41:19,177 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:42:19,211 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:43:19,236 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:44:19,278 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:45:19,315 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:46:19,352 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:47:19,375 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:48:19,411 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:49:19,446 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:50:19,485 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:51:19,525 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:52:19,564 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:53:19,599 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:54:19,637 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:55:19,680 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:56:19,723 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:57:19,780 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:58:19,916 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 13:59:19,959 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:00:20,003 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:01:20,042 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:02:20,097 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:03:20,140 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:04:20,180 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:05:20,223 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:06:20,257 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:07:20,293 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:08:20,328 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:09:20,363 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:10:20,408 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:11:20,439 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:12:20,485 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:13:20,528 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:14:20,565 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:15:20,608 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:16:20,640 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:17:20,680 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:18:20,723 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:19:22,819 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:20:22,851 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:21:22,883 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:22:22,924 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:23:36,485 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:27:21,402 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:28:21,451 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:29:21,485 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:30:30,483 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:33:12,602 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:37:26,944 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:39:32,543 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 14:46:51,300 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 15:03:16,664 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 15:19:36,428 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 15:37:11,195 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 15:52:37,899 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 15:53:37,967 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 15:54:38,037 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 15:55:38,110 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 15:56:38,184 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 15:57:38,244 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 16:02:03,057 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 16:03:59,093 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
+2025-09-19 16:05:21,079 - root - INFO - Message Stats - Total: 1, Encrypted: 1, Plain: 0, Errors: 0
